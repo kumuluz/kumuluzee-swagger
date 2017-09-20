@@ -1,20 +1,20 @@
-# KumuluzEE OpenAPI
+# KumuluzEE Swagger
 [![Build Status](https://img.shields.io/travis/kumuluz/kumuluzee-openAPI/master.svg?style=flat)](https://travis-ci.org/kumuluz/kumuluzee-openAPI)
 
-> KumuluzEE OpenAPI extension for the Kumuluz EE microservice framework. 
+> KumuluzEE Swagger extension for the Kumuluz EE microservice framework. 
 
-KumuluzEE OpenAPI ... 
+KumuluzEE Swagger ... 
  
-More details: [OpenAPI Specification](https://github.com/OAI/OpenAPI-Specification/blob/3.0.0/versions/3.0.0.md).
+More details: [Swagger Specification](https://github.com/OAI/OpenAPI-Specification/blob/3.0.0/versions/2.0.md).
 
 ## Usage
 
-You can enable the KumuluzEE OpenAPI support by adding the following dependency:
+You can enable the KumuluzEE Swagger support by adding the following dependency:
 ```xml
 <dependency>
-    <groupId>com.kumuluz.ee.cors</groupId>
-    <artifactId>kumuluzee-cors</artifactId>
-    <version>${kumuluzee-cors.version}</version>
+    <groupId>com.kumuluz.ee.swagger</groupId>
+    <artifactId>kumuluzee-swagger</artifactId>
+    <version>${kumuluzee-swagger.version}</version>
 </dependency>
 ```
 
