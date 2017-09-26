@@ -46,12 +46,6 @@
 
     <developers>
         <developer>
-            <name>Tilen Faganel</name>
-            <id>tfaga</id>
-            <email>tilen.faganel@me.com</email>
-            <url>https://github.com/TFaga</url>
-        </developer>
-        <developer>
             <name>Zvone Gazvoda</name>
             <id>zvonegit</id>
             <url>https://github.com/zvonegit</url>
@@ -96,14 +90,29 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>com.kumuluz.ee</groupId>
+            <artifactId>kumuluzee-jax-rs-jersey</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>io.swagger</groupId>
-            <artifactId>swagger-core</artifactId>
+            <artifactId>swagger-annotations</artifactId>
+            <version>${swagger.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-models</artifactId>
             <version>${swagger.version}</version>
         </dependency>
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-jersey2-jaxrs</artifactId>
             <version>${swagger.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.6</version>
         </dependency>
     </dependencies>
 
@@ -119,6 +128,34 @@
                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven-compiler-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>default-compile</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <proc>none</proc>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>compile-important-processor</id>
+                        <phase>process-test-sources</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <proc>none</proc>
+                            <testIncludes>
+                                <include>com/kumuluz/ee/swagger/processor/*</include>
+                            </testIncludes>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
