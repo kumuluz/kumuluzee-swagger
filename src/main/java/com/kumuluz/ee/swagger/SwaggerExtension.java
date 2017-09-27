@@ -11,15 +11,13 @@ import com.kumuluz.ee.common.dependencies.EeExtensionDef;
 import com.kumuluz.ee.common.wrapper.KumuluzServerWrapper;
 import com.kumuluz.ee.jetty.JettyServletServer;
 import com.kumuluz.ee.swagger.models.SwaggerConfiguration;
+import com.kumuluz.ee.swagger.servlets.ApplicationServletListener;
 import io.swagger.jaxrs.config.BeanConfig;
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.servlet.ServletContainer;
 
-import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,9 +48,8 @@ public class SwaggerExtension implements Extension {
 
             JettyServletServer server = (JettyServletServer) kumuluzServerWrapper.getServer();
 
-            Map<String, String> parameters = new HashMap<>();
-            parameters.put("jersey.config.server.provider.classnames", "io.swagger.jaxrs.listing.ApiListingResource,io.swagger.jaxrs" +
-                    ".listing.SwaggerSerializers");
+            ApplicationServletListener listener = new ApplicationServletListener();
+            server.registerListener(listener);
 
             InputStream is = getClass().getClassLoader().getResourceAsStream("swagger-configuration.json");
             ObjectMapper mapper = new ObjectMapper();
@@ -70,12 +67,18 @@ public class SwaggerExtension implements Extension {
                 BeanConfig beanConfig = new BeanConfig();
 
                 if (config != null) {
+                    Map<String, String> parameters = new HashMap<>();
+                    parameters.put("jersey.config.server.provider.classnames", "io.swagger.jaxrs.listing.ApiListingResource,io.swagger.jaxrs" +
+                            ".listing.SwaggerSerializers");
+
                     beanConfig.setSchemes(new String[]{"http"});
                     beanConfig.setHost(config.getSwagger().getHost());
                     beanConfig.setBasePath(config.getSwagger().getBasePath());
 
-                    if (config.getApplicationClass() != null) {
-                        ServletHolder sh = Arrays.stream(server.getRegisteredServlets()).filter(servletHolder -> {
+
+                    /*if (config.getApplicationClass() != null) {
+                        ServletHolder[] registeredServlets = server.getRegisteredServlets();
+                        ServletHolder sh = Arrays.stream(registeredServlets).filter(servletHolder -> {
                             try {
                                 return servletHolder.getServlet().getServletConfig().getInitParameter("javax.ws.rs.Application").equals
                                         (config.getApplicationClass());
@@ -93,14 +96,28 @@ public class SwaggerExtension implements Extension {
                         }
                     } else {
                         beanConfig.setResourcePackage(config.getResourcePackagesAsString());
+                    }*/
+
+                    if(config.getApplicationClass().equals("com.kumuluz.ee.samples.swagger.v1.CustomerApplication")){
+                        beanConfig.setResourcePackage("com.kumuluz.ee.samples.swagger.v1");
+                        beanConfig.setScannerId("1");
+                        beanConfig.setConfigId("1");
+                        parameters.put("swagger.scanner.id", "1");
+                        parameters.put("swagger.config.id", "1");
+                    }else {
+                        beanConfig.setResourcePackage("com.kumuluz.ee.samples.swagger.v2");
+                        beanConfig.setScannerId("2");
+                        beanConfig.setConfigId("2");
+                        parameters.put("swagger.scanner.id", "2");
+                        parameters.put("swagger.config.id", "2");
                     }
 
                     beanConfig.setScan(true);
+
+                    String baseApiPath = StringUtils.strip(beanConfig.getBasePath(), "/");
+
+                    server.registerServlet(ServletContainer.class, "/api-specs/" + baseApiPath + "/*", parameters, 1);
                 }
-
-                String baseApiPath = StringUtils.strip(beanConfig.getBasePath(), "/");
-
-                server.registerServlet(ServletContainer.class, "/api-specs/" + baseApiPath + "/*", parameters, 1);
 
             }
 

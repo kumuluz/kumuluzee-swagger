@@ -62,19 +62,18 @@ public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
 
         elements = roundEnv.getElementsAnnotatedWith(SwaggerDefinition.class);
 
-        com.kumuluz.ee.swagger.models.Swagger swagger = new com.kumuluz.ee.swagger.models.Swagger();
-
         Element[] elems = elements.toArray(new Element[elements.size()]);
-        io.swagger.models.Info info = new io.swagger.models.Info();
 
-        if (elements.size() > 0) {
+        if (elems.length > 0) {
             List<SwaggerConfiguration> configs = new ArrayList<>();
 
             for (int i = 0; i < elems.length; i++) {
+                com.kumuluz.ee.swagger.models.Swagger swagger = new com.kumuluz.ee.swagger.models.Swagger();
+                io.swagger.models.Info info = new io.swagger.models.Info();
 
                 SwaggerConfiguration swaggerConfiguration = new SwaggerConfiguration();
 
-                if (elements.size() == 1) {
+                if (elems.length == 1) {
                     elements = roundEnv.getElementsAnnotatedWith(Path.class);
                     elements.forEach(e -> getElementName(applicationElementNames, e));
 
@@ -105,8 +104,8 @@ public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
 
                 swagger.setInfo(info);
 
-                ApplicationPath applicationPathAnnotation = elems[0].getAnnotation(ApplicationPath.class);
-                if (applicationPathAnnotation != null) {
+                ApplicationPath applicationPathAnnotation = elems[i].getAnnotation(ApplicationPath.class);
+                if (applicationPathAnnotation != null && !applicationPathAnnotation.value().equals("")) {
                     swagger.setBasePath(applicationPathAnnotation.value());
                 } else {
                     swagger.setBasePath(swaggerDefinitionAnnotation.basePath());
