@@ -65,6 +65,10 @@ public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
         Element[] elems = elements.toArray(new Element[elements.size()]);
 
         if (elems.length > 0) {
+            if (elems.length > 1) {
+
+            }
+
             List<SwaggerConfiguration> configs = new ArrayList<>();
 
             for (int i = 0; i < elems.length; i++) {
