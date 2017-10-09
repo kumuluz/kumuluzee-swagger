@@ -61,33 +61,37 @@ public class SwaggerExtension implements Extension {
                 LOG.warning("Unable to load swagger configuration. Swagger definition will not be served.");
             }
 
-            for (int i = 0; i < swaggerConfigurations.size(); i++) {
-                SwaggerConfiguration config = swaggerConfigurations.get(i);
+            if (swaggerConfigurations != null) {
 
-                BeanConfig beanConfig = new BeanConfig();
+                for (int i = 0; i < swaggerConfigurations.size(); i++) {
+                    SwaggerConfiguration config = swaggerConfigurations.get(i);
 
-                if (config != null) {
-                    Map<String, String> parameters = new HashMap<>();
-                    parameters.put("jersey.config.server.provider.classnames", "io.swagger.jaxrs.listing.ApiListingResource,io.swagger" +
-                            ".jaxrs" +
-                            ".listing.SwaggerSerializers");
+                    BeanConfig beanConfig = new BeanConfig();
 
-                    beanConfig.setSchemes(new String[]{"http"});
-                    beanConfig.setHost(config.getSwagger().getHost());
-                    beanConfig.setBasePath(config.getSwagger().getBasePath());
-                    beanConfig.setResourcePackage(config.getResourcePackagesAsString());
-                    beanConfig.setScannerId(String.valueOf(i));
-                    beanConfig.setConfigId(String.valueOf(i));
-                    parameters.put("swagger.scanner.id", String.valueOf(i));
-                    parameters.put("swagger.config.id", String.valueOf(i));
+                    if (config != null) {
+                        Map<String, String> parameters = new HashMap<>();
+                        parameters.put("jersey.config.server.provider.classnames", "io.swagger.jaxrs.listing.ApiListingResource,io" +
+                                ".swagger" +
+                                ".jaxrs" +
+                                ".listing.SwaggerSerializers");
 
-                    beanConfig.setScan(true);
+                        beanConfig.setSchemes(new String[]{"http"});
+                        beanConfig.setHost(config.getSwagger().getHost());
+                        beanConfig.setBasePath(config.getSwagger().getBasePath());
+                        beanConfig.setResourcePackage(config.getResourcePackagesAsString());
+                        beanConfig.setScannerId(String.valueOf(i));
+                        beanConfig.setConfigId(String.valueOf(i));
+                        parameters.put("swagger.scanner.id", String.valueOf(i));
+                        parameters.put("swagger.config.id", String.valueOf(i));
 
-                    String baseApiPath = StringUtils.strip(beanConfig.getBasePath(), "/");
+                        beanConfig.setScan(true);
 
-                    server.registerServlet(ServletContainer.class, "/api-specs/" + baseApiPath + "/*", parameters, 1);
+                        String baseApiPath = StringUtils.strip(beanConfig.getBasePath(), "/");
+
+                        server.registerServlet(ServletContainer.class, "/api-specs/" + baseApiPath + "/*", parameters, 1);
+                    }
+
                 }
-
             }
 
             LOG.info("Swagger extension initialized.");

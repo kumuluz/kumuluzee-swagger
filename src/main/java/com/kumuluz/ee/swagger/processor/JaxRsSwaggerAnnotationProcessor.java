@@ -8,6 +8,7 @@ import com.kumuluz.ee.swagger.utils.AnnotationProcessorUtil;
 import io.swagger.annotations.SwaggerDefinition;
 import io.swagger.models.Contact;
 import io.swagger.models.License;
+import io.swagger.models.Scheme;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -22,6 +23,7 @@ import javax.ws.rs.Path;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Created by zvoneg on 26/09/2017.
@@ -64,10 +66,7 @@ public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
 
         Element[] elems = elements.toArray(new Element[elements.size()]);
 
-        if (elems.length > 0) {
-            if (elems.length > 1) {
-
-            }
+        if (elems.length == 1) {
 
             List<SwaggerConfiguration> configs = new ArrayList<>();
 
@@ -77,14 +76,12 @@ public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
 
                 SwaggerConfiguration swaggerConfiguration = new SwaggerConfiguration();
 
-                if (elems.length == 1) {
-                    elements = roundEnv.getElementsAnnotatedWith(Path.class);
-                    elements.forEach(e -> getElementName(applicationElementNames, e));
+                elements = roundEnv.getElementsAnnotatedWith(Path.class);
+                elements.forEach(e -> getElementName(applicationElementNames, e));
 
-                    swaggerConfiguration.setResourcePackages(applicationElementNames);
-                } else {
-                    swaggerConfiguration.setApplicationClass(elems[i].toString());
-                }
+                swaggerConfiguration.setResourcePackages(applicationElementNames);
+
+                swaggerConfiguration.setApplicationClass(elems[i].toString());
 
                 SwaggerDefinition swaggerDefinitionAnnotation = elems[i].getAnnotation(SwaggerDefinition.class);
 
@@ -107,6 +104,31 @@ public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
                 info.setTermsOfService(swaggerDefinitionAnnotation.info().termsOfService());
 
                 swagger.setInfo(info);
+
+                List<Scheme> schemes = Arrays.asList(swaggerDefinitionAnnotation.schemes()).stream().map(s -> {
+                    Scheme scheme = null;
+                    switch (s.toString()) {
+                        case "HTTP":
+                            scheme = Scheme.HTTP;
+                            break;
+                        case "HTTPS":
+                            scheme = Scheme.HTTPS;
+                            break;
+                        case "WS":
+                            scheme = Scheme.WS;
+                            break;
+                        case "WSS":
+                            scheme = Scheme.WSS;
+                            break;
+                        default:
+                            scheme = null;
+                            break;
+                    }
+
+                    return scheme;
+                }).collect(Collectors.toList());
+
+                swagger.setSchemes(schemes);
 
                 ApplicationPath applicationPathAnnotation = elems[i].getAnnotation(ApplicationPath.class);
                 if (applicationPathAnnotation != null && !applicationPathAnnotation.value().equals("")) {
@@ -133,6 +155,8 @@ public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
                 LOG.warning(e.getMessage());
             }
 
+        } else {
+            LOG.warning("Multiple JAX-RS Applications not supported.");
         }
 
         return false;
