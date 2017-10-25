@@ -72,8 +72,13 @@ public class SwaggerExtension implements Extension {
 
                 applicationPath = StringUtils.strip(applicationPath, "/");
 
-                InputStream is = getClass().getClassLoader().getResourceAsStream("api-specs/" + applicationPath + "/swagger-configuration" +
-                        ".json");
+                InputStream is = null;
+                if (applicationPath.equals("")) {
+                    is = getClass().getClassLoader().getResourceAsStream("api-specs/swagger-configuration.json");
+                } else {
+                    is = getClass().getClassLoader().getResourceAsStream("api-specs/" + applicationPath +
+                            "/swagger-configuration.json");
+                }
 
                 SwaggerConfiguration swaggerConfiguration = null;
                 try {
@@ -113,7 +118,11 @@ public class SwaggerExtension implements Extension {
                     parameters.put("swagger.config.id", applicationPath);
                     beanConfig.setScan(true);
 
-                    server.registerServlet(ApiListingServlet.class, "/api-specs/" + applicationPath + "/*", parameters, 1);
+                    if (applicationPath.equals("")) {
+                        server.registerServlet(ApiListingServlet.class, "/api-specs/*", parameters, 1);
+                    } else {
+                        server.registerServlet(ApiListingServlet.class, "/api-specs/" + applicationPath + "/*", parameters, 1);
+                    }
                 }
             }
 

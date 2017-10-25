@@ -14,7 +14,7 @@
 
     <inceptionYear>2017</inceptionYear>
     <description>
-        KumuluzEE Swagger extension for documenting REST APIs, exposing raw Swagger definition of the API and Swagger-UI for visualization.
+        KumuluzEE Swagger extension for documenting REST APIs, exposing raw Swagger definition of the API and Swagger-UI for visualization and API interaction.
     </description>
 
     <url>https://ee.kumuluz.com</url>

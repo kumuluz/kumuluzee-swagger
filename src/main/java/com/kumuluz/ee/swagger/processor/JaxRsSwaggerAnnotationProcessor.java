@@ -31,7 +31,10 @@ import java.util.stream.Collectors;
 import javax.lang.model.util.Types;
 
 /**
- * Created by zvoneg on 26/09/2017.
+ * JaxRsSwaggerAnnotationProcessor annotation processor class.
+ *
+ * @author Zvone Gazvoda
+ * @since 2.5.0
  */
 public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
     private static final Logger LOG = Logger.getLogger(JaxRsSwaggerAnnotationProcessor.class.getName());
@@ -126,7 +129,7 @@ public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
                     swagger.setInfo(info);
 
                     ApplicationPath applicationPathAnnotation = element.getAnnotation(ApplicationPath.class);
-                    if (applicationPathAnnotation != null && !applicationPathAnnotation.value().equals("")) {
+                    if (applicationPathAnnotation != null) {
                         swagger.setBasePath(applicationPathAnnotation.value());
                     } else {
                         swagger.setBasePath(swaggerDefinitionAnnotation.basePath());
@@ -186,7 +189,11 @@ public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
 
                         path = StringUtils.strip(path, "/");
 
-                        AnnotationProcessorUtil.writeFile(jsonOAC, "api-specs/" + path + "/swagger-configuration.json", filer);
+                        if (path.equals("")) {
+                            AnnotationProcessorUtil.writeFile(jsonOAC, "api-specs/swagger-configuration.json", filer);
+                        } else {
+                            AnnotationProcessorUtil.writeFile(jsonOAC, "api-specs/" + path + "/swagger-configuration.json", filer);
+                        }
                     } catch (IOException e) {
                         LOG.warning(e.getMessage());
                     }

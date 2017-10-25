@@ -38,7 +38,7 @@ public class ApiListingServlet extends HttpServlet {
     private static volatile boolean initialized = false;
     private static volatile ConcurrentMap<String, Boolean> initializedScanner = new ConcurrentHashMap();
     private static volatile ConcurrentMap<String, Boolean> initializedConfig = new ConcurrentHashMap();
-    private static Logger LOGGER = LoggerFactory.getLogger(BaseApiListingResource.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(ApiListingServlet.class);
 
     private static synchronized Swagger scan(Application app, ServletContext context, ServletConfig sc, String basePath) {
         Swagger swagger = null;
@@ -152,20 +152,20 @@ public class ApiListingServlet extends HttpServlet {
         try {
             PrintWriter out = response.getWriter();
 
+            String specification = null;
             if (type.trim().equalsIgnoreCase("json")) {
                 response.setContentType("application/json");
 
-                String json = this.getListingJsonResponse(null, this.getServletContext(), this.getServletConfig(), null,
+                specification = this.getListingJsonResponse(null, this.getServletContext(), this.getServletConfig(), null,
                         applicationBasePath);
-
-                out.print(json);
             } else if (type.trim().equalsIgnoreCase("yaml")) {
                 response.setContentType("application/yaml");
 
-                String yaml = this.getListingYamlResponse(null, this.getServletContext(), this.getServletConfig(), null,
+                specification = this.getListingYamlResponse(null, this.getServletContext(), this.getServletConfig(), null,
                         applicationBasePath);
-                out.print(yaml);
             }
+
+            out.print(specification);
 
             response.setStatus(HttpServletResponse.SC_OK);
         } catch (Exception e) {
@@ -173,7 +173,7 @@ public class ApiListingServlet extends HttpServlet {
         }
     }
 
-    protected Swagger process(Application app, ServletContext servletContext, ServletConfig sc, HttpHeaders headers, String basePath) {
+    private Swagger process(Application app, ServletContext servletContext, ServletConfig sc, HttpHeaders headers, String basePath) {
         SwaggerContextService ctxService = (new SwaggerContextService()).withServletConfig(sc).withBasePath(basePath);
         Swagger swagger = ctxService.getSwagger();
         Class var8 = ApiListingResource.class;
@@ -207,7 +207,7 @@ public class ApiListingServlet extends HttpServlet {
         return swagger;
     }
 
-    protected String getListingYamlResponse(Application app, ServletContext servletContext, ServletConfig servletConfig, HttpHeaders
+    private String getListingYamlResponse(Application app, ServletContext servletContext, ServletConfig servletConfig, HttpHeaders
             headers, String basePath) {
         Swagger swagger = this.process(app, servletContext, servletConfig, headers, basePath);
 
@@ -234,7 +234,7 @@ public class ApiListingServlet extends HttpServlet {
         return null;
     }
 
-    protected String getListingJsonResponse(Application app, ServletContext servletContext, ServletConfig servletConfig, HttpHeaders
+    private String getListingJsonResponse(Application app, ServletContext servletContext, ServletConfig servletConfig, HttpHeaders
             headers, String basePath) throws JsonProcessingException {
         Swagger swagger = this.process(app, servletContext, servletConfig, headers, basePath);
         return Json.mapper().enable(SerializationFeature.INDENT_OUTPUT).writeValueAsString(swagger);
