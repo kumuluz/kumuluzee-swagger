@@ -89,6 +89,7 @@
             <artifactId>kumuluzee-servlet-jetty</artifactId>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>com.kumuluz.ee</groupId>
             <artifactId>kumuluzee-jax-rs-jersey</artifactId>

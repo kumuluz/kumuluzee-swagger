@@ -9,6 +9,7 @@ import io.swagger.annotations.SwaggerDefinition;
 import io.swagger.models.Contact;
 import io.swagger.models.License;
 import io.swagger.models.Scheme;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -18,12 +19,16 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.Path;
+import javax.ws.rs.core.Application;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import javax.lang.model.util.Types;
 
 /**
  * Created by zvoneg on 26/09/2017.
@@ -32,6 +37,7 @@ public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
     private static final Logger LOG = Logger.getLogger(JaxRsSwaggerAnnotationProcessor.class.getName());
 
     private Set<String> applicationElementNames = new HashSet<>();
+    private Set<String> resourceElementNames = new HashSet<>();
 
     private Filer filer;
 
@@ -58,116 +64,163 @@ public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
         try {
             Class.forName("javax.ws.rs.core.Application");
         } catch (ClassNotFoundException e) {
-            LOG.info("javax.ws.rs.core.Application not found, skipping JAX-RS CORS annotation processing");
+            LOG.info("javax.ws.rs.core.Application not found, skipping JAX-RS Swagger annotation processing");
             return false;
         }
 
+        elements = roundEnv.getElementsAnnotatedWith(Path.class);
+        elements.forEach(e -> getElementPackage(resourceElementNames, e));
+
         elements = roundEnv.getElementsAnnotatedWith(SwaggerDefinition.class);
+        elements.forEach(e -> getElementName(applicationElementNames, e, processingEnv.getTypeUtils()));
 
-        Element[] elems = elements.toArray(new Element[elements.size()]);
+        SwaggerConfiguration config = null;
 
-        if (elems.length == 1) {
+        if (elements.size() != 0) {
+            for (Element element : elements) {
 
-            List<SwaggerConfiguration> configs = new ArrayList<>();
-
-            for (int i = 0; i < elems.length; i++) {
                 com.kumuluz.ee.swagger.models.Swagger swagger = new com.kumuluz.ee.swagger.models.Swagger();
                 io.swagger.models.Info info = new io.swagger.models.Info();
 
-                SwaggerConfiguration swaggerConfiguration = new SwaggerConfiguration();
+                SwaggerDefinition swaggerDefinitionAnnotation = element.getAnnotation(SwaggerDefinition.class);
 
-                elements = roundEnv.getElementsAnnotatedWith(Path.class);
-                elements.forEach(e -> getElementName(applicationElementNames, e));
+                if (swaggerDefinitionAnnotation != null) {
+                    info.setTitle(swaggerDefinitionAnnotation.info().title());
+                    info.setVersion(swaggerDefinitionAnnotation.info().version());
 
-                swaggerConfiguration.setResourcePackages(applicationElementNames);
+                    Contact contact = null;
+                    if (!swaggerDefinitionAnnotation.info().contact().email().equals("")) {
+                        contact = new Contact();
+                        contact.setEmail(swaggerDefinitionAnnotation.info().contact().email());
+                    }
+                    if (!swaggerDefinitionAnnotation.info().contact().name().equals("")) {
+                        if (contact == null) contact = new Contact();
+                        contact.setName(swaggerDefinitionAnnotation.info().contact().name());
+                    }
+                    if (!swaggerDefinitionAnnotation.info().contact().url().equals("")) {
+                        if (contact == null) contact = new Contact();
+                        contact.setUrl(swaggerDefinitionAnnotation.info().contact().url());
+                    }
+                    info.setContact(contact);
 
-                swaggerConfiguration.setApplicationClass(elems[i].toString());
-
-                SwaggerDefinition swaggerDefinitionAnnotation = elems[i].getAnnotation(SwaggerDefinition.class);
-
-                info.setTitle(swaggerDefinitionAnnotation.info().title());
-                info.setVersion(swaggerDefinitionAnnotation.info().version());
-
-                Contact contact = new Contact();
-                contact.setEmail(swaggerDefinitionAnnotation.info().contact().email());
-                contact.setName(swaggerDefinitionAnnotation.info().contact().name());
-                contact.setUrl(swaggerDefinitionAnnotation.info().contact().url());
-                info.setContact(contact);
-
-                info.setDescription(swaggerDefinitionAnnotation.info().description());
-
-                License license = new License();
-                license.setName(swaggerDefinitionAnnotation.info().license().name());
-                license.setUrl(swaggerDefinitionAnnotation.info().license().url());
-
-                info.setLicense(license);
-                info.setTermsOfService(swaggerDefinitionAnnotation.info().termsOfService());
-
-                swagger.setInfo(info);
-
-                List<Scheme> schemes = Arrays.asList(swaggerDefinitionAnnotation.schemes()).stream().map(s -> {
-                    Scheme scheme = null;
-                    switch (s.toString()) {
-                        case "HTTP":
-                            scheme = Scheme.HTTP;
-                            break;
-                        case "HTTPS":
-                            scheme = Scheme.HTTPS;
-                            break;
-                        case "WS":
-                            scheme = Scheme.WS;
-                            break;
-                        case "WSS":
-                            scheme = Scheme.WSS;
-                            break;
-                        default:
-                            scheme = null;
-                            break;
+                    if (!swaggerDefinitionAnnotation.info().description().equals("")) {
+                        info.setDescription(swaggerDefinitionAnnotation.info().description());
                     }
 
-                    return scheme;
-                }).collect(Collectors.toList());
+                    License license = null;
+                    if (!swaggerDefinitionAnnotation.info().license().name().equals("")) {
+                        license = new License();
+                        license.setName(swaggerDefinitionAnnotation.info().license().name());
+                    }
+                    if (!swaggerDefinitionAnnotation.info().license().url().equals("")) {
+                        if (license == null) license = new License();
+                        license.setUrl(swaggerDefinitionAnnotation.info().license().url());
+                    }
 
-                swagger.setSchemes(schemes);
+                    info.setLicense(license);
 
-                ApplicationPath applicationPathAnnotation = elems[i].getAnnotation(ApplicationPath.class);
-                if (applicationPathAnnotation != null && !applicationPathAnnotation.value().equals("")) {
-                    swagger.setBasePath(applicationPathAnnotation.value());
-                } else {
-                    swagger.setBasePath(swaggerDefinitionAnnotation.basePath());
+                    if (!swaggerDefinitionAnnotation.info().termsOfService().equals("")) {
+                        info.setTermsOfService(swaggerDefinitionAnnotation.info().termsOfService());
+                    }
+
+                    swagger.setInfo(info);
+
+                    ApplicationPath applicationPathAnnotation = element.getAnnotation(ApplicationPath.class);
+                    if (applicationPathAnnotation != null && !applicationPathAnnotation.value().equals("")) {
+                        swagger.setBasePath(applicationPathAnnotation.value());
+                    } else {
+                        swagger.setBasePath(swaggerDefinitionAnnotation.basePath());
+                    }
+
+                    if (swagger.getBasePath() == null || swagger.getBasePath().equals("")) {
+                        LOG.warning("Unable to obtain API Base path. Provide @ApplicationPath or set basePath in @SwaggerDefinition.");
+                        continue;
+                    }
+
+                    List<Scheme> schemes = Arrays.stream(swaggerDefinitionAnnotation.schemes()).map(s -> {
+                        Scheme scheme = null;
+
+                        switch (s.ordinal()) {
+                            case 1:
+                                scheme = Scheme.HTTP;
+                                break;
+                            case 2:
+                                scheme = Scheme.HTTPS;
+                                break;
+                            case 3:
+                                scheme = Scheme.WS;
+                                break;
+                            case 4:
+                                scheme = Scheme.WSS;
+                                break;
+                            default:
+                                scheme = Scheme.HTTP;
+                                break;
+                        }
+
+                        return scheme;
+                    }).collect(Collectors.toList());
+
+                    if (schemes.size() == 0) {
+                        schemes.add(Scheme.HTTP);
+                    }
+
+                    swagger.setSchemes(schemes);
+                    swagger.setHost(swaggerDefinitionAnnotation.host());
+
+
+                    config = new SwaggerConfiguration();
+
+                    config.setSwagger(swagger);
+                    if (applicationElementNames.size() == 1) {
+                        config.setResourcePackages(resourceElementNames);
+                    }
+
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        mapper.enable(SerializationFeature.INDENT_OUTPUT);
+                        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+                        String jsonOAC = mapper.writeValueAsString(config);
+
+                        String path = swagger.getBasePath();
+
+                        path = StringUtils.strip(path, "/");
+
+                        AnnotationProcessorUtil.writeFile(jsonOAC, "api-specs/" + path + "/swagger-configuration.json", filer);
+                    } catch (IOException e) {
+                        LOG.warning(e.getMessage());
+                    }
+
                 }
-
-                swagger.setHost(swaggerDefinitionAnnotation.host());
-
-                swaggerConfiguration.setSwagger(swagger);
-
-                configs.add(swaggerConfiguration);
             }
 
             try {
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.enable(SerializationFeature.INDENT_OUTPUT);
-                mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-                String jsonOAC = mapper.writeValueAsString(configs);
-
-                AnnotationProcessorUtil.writeFile(jsonOAC, "swagger-configuration.json", filer);
+                AnnotationProcessorUtil.writeFileSet(applicationElementNames, "META-INF/services/javax.ws.rs.core.Application", filer);
             } catch (IOException e) {
                 LOG.warning(e.getMessage());
             }
-
-        } else {
-            LOG.warning("Multiple JAX-RS Applications not supported.");
         }
 
         return false;
     }
 
-    private void getElementName(Set<String> jaxRsElementNames, Element e) {
+    private void getElementPackage(Set<String> jaxRsElementNames, Element e) {
 
         ElementKind elementKind = e.getKind();
 
         if (elementKind.equals(ElementKind.CLASS)) {
             jaxRsElementNames.add(e.toString().substring(0, e.toString().lastIndexOf(".")));
+        }
+    }
+
+    private void getElementName(Set<String> jaxRsElementNames, Element e, Types types) {
+
+        ElementKind elementKind = e.getKind();
+
+        if (elementKind.equals(ElementKind.CLASS)) {
+            if (((TypeElement) e).getSuperclass().toString().equals(Application.class.getTypeName())) {
+                jaxRsElementNames.add(e.toString());
+            }
         }
     }
 }

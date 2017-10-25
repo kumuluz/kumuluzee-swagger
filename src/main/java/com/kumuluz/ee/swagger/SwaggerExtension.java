@@ -1,6 +1,5 @@
 package com.kumuluz.ee.swagger;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kumuluz.ee.common.Extension;
@@ -11,18 +10,19 @@ import com.kumuluz.ee.common.dependencies.EeExtensionDef;
 import com.kumuluz.ee.common.wrapper.KumuluzServerWrapper;
 import com.kumuluz.ee.jetty.JettyServletServer;
 import com.kumuluz.ee.swagger.models.SwaggerConfiguration;
+import com.kumuluz.ee.swagger.servlets.ApiListingServlet;
+import io.swagger.annotations.SwaggerDefinition;
 import io.swagger.jaxrs.config.BeanConfig;
+import io.swagger.models.Scheme;
 import org.apache.commons.lang3.StringUtils;
-import org.glassfish.jersey.servlet.ServletContainer;
 
-import javax.servlet.ServletContext;
-import javax.ws.rs.core.Context;
+import javax.ws.rs.ApplicationPath;
+import javax.ws.rs.core.Application;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * SwaggerExtension class.
@@ -38,7 +38,6 @@ public class SwaggerExtension implements Extension {
 
     @Override
     public void load() {
-
     }
 
     @Override
@@ -49,52 +48,80 @@ public class SwaggerExtension implements Extension {
 
             JettyServletServer server = (JettyServletServer) kumuluzServerWrapper.getServer();
 
-            InputStream is = getClass().getClassLoader().getResourceAsStream("swagger-configuration.json");
+            List<Application> applications = new ArrayList<>();
+            ServiceLoader.load(Application.class).forEach(applications::add);
+
             ObjectMapper mapper = new ObjectMapper();
             mapper.enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
 
-            List<SwaggerConfiguration> swaggerConfigurations = null;
-            try {
-                swaggerConfigurations = mapper.readValue(is, new TypeReference<List<SwaggerConfiguration>>() {
-                });
-            } catch (IOException e) {
-                LOG.warning("Unable to load swagger configuration. Swagger definition will not be served.");
-            }
+            for (Application application : applications) {
 
-            if (swaggerConfigurations != null) {
+                Class<?> applicationClass = application.getClass();
+                if (targetClassIsProxied(applicationClass)) {
+                    applicationClass = applicationClass.getSuperclass();
+                }
 
-                for (int i = 0; i < swaggerConfigurations.size(); i++) {
-                    SwaggerConfiguration config = swaggerConfigurations.get(i);
+                String applicationPath = "";
+                ApplicationPath applicationPathAnnotation = applicationClass.getAnnotation(ApplicationPath.class);
+                if (applicationPathAnnotation != null) {
+                    applicationPath = applicationPathAnnotation.value();
+                } else {
+                    SwaggerDefinition swaggerAnnotation = applicationClass.getAnnotation(SwaggerDefinition.class);
+                    applicationPath = swaggerAnnotation.basePath();
+                }
 
-                    BeanConfig beanConfig = new BeanConfig();
+                applicationPath = StringUtils.strip(applicationPath, "/");
 
-                    if (config != null) {
-                        Map<String, String> parameters = new HashMap<>();
-                        parameters.put("jersey.config.server.provider.classnames", "io.swagger.jaxrs.listing.ApiListingResource,io" +
-                                ".swagger" +
-                                ".jaxrs" +
-                                ".listing.SwaggerSerializers");
+                InputStream is = getClass().getClassLoader().getResourceAsStream("api-specs/" + applicationPath + "/swagger-configuration" +
+                        ".json");
 
-                        beanConfig.setSchemes(new String[]{"http"});
-                        beanConfig.setHost(config.getSwagger().getHost());
-                        beanConfig.setBasePath(config.getSwagger().getBasePath());
-                        beanConfig.setResourcePackage(config.getResourcePackagesAsString());
-                        beanConfig.setScannerId(String.valueOf(i));
-                        beanConfig.setConfigId(String.valueOf(i));
-                        parameters.put("swagger.scanner.id", String.valueOf(i));
-                        parameters.put("swagger.config.id", String.valueOf(i));
+                SwaggerConfiguration swaggerConfiguration = null;
+                try {
+                    swaggerConfiguration = mapper.readValue(is, SwaggerConfiguration.class);
+                } catch (IOException e) {
+                    LOG.warning("Unable to load swagger configuration. Swagger specification will not be served.");
+                    continue;
+                }
 
-                        beanConfig.setScan(true);
+                BeanConfig beanConfig = new BeanConfig();
 
-                        String baseApiPath = StringUtils.strip(beanConfig.getBasePath(), "/");
+                if (swaggerConfiguration != null) {
+                    Map<String, String> parameters = new HashMap<>();
 
-                        server.registerServlet(ServletContainer.class, "/api-specs/" + baseApiPath + "/*", parameters, 1);
+                    beanConfig.setSchemes(swaggerConfiguration.getSwagger().getSchemes().stream().map(Scheme::toValue).toArray
+                            (String[]::new));
+                    beanConfig.setHost(swaggerConfiguration.getSwagger().getHost());
+                    beanConfig.setBasePath(swaggerConfiguration.getSwagger().getBasePath());
+                    if (applications.size() == 1) {
+                        beanConfig.setResourcePackage(swaggerConfiguration.getResourcePackagesAsString());
+                    } else {
+
+                        Set<Class<?>> resources = application.getClasses();
+                        Set<String> resourcePackages = resources.stream().map(r -> r.getPackage().getName()).collect(Collectors
+                                .toSet());
+
+                        String packages = StringUtils.join(resourcePackages, ",");
+
+                        beanConfig.setResourcePackage(packages);
                     }
 
+                    beanConfig.getSwagger().setInfo(swaggerConfiguration.getSwagger().getInfo());
+                    beanConfig.setScannerId(applicationPath);
+                    beanConfig.setPrettyPrint(true);
+                    beanConfig.setConfigId(applicationPath);
+                    parameters.put("swagger.scanner.id", applicationPath);
+                    parameters.put("swagger.config.id", applicationPath);
+                    beanConfig.setScan(true);
+
+                    server.registerServlet(ApiListingServlet.class, "/api-specs/" + applicationPath + "/*", parameters, 1);
                 }
             }
 
             LOG.info("Swagger extension initialized.");
         }
+    }
+
+    private boolean targetClassIsProxied(Class targetClass) {
+        return targetClass.getCanonicalName().contains("$Proxy");
     }
 }
