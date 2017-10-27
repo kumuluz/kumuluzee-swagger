@@ -125,7 +125,7 @@ and second, you have to provide list of packages to Swagger-UI for each JAX-RS A
             <apiSpecification>
                 <applicationPath>/v2</applicationPath>
                 <resourcePackages>
-                    com.kumuluz.ee.samples.v1.resources
+                    com.kumuluz.ee.samples.v2.resources
                 </resourcePackages>
             </apiSpecification>
         </apiSpecifications>
