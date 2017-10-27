@@ -134,7 +134,7 @@ and second, you have to provide list of packages to Swagger-UI for each JAX-RS A
 </configuration>
 ```
 
-Multiple JAX-RS applications in singe JAR only wwork without CDI.
+Multiple JAX-RS applications in singe JAR only work without CDI.
 
 ## Changelog
 
