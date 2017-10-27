@@ -1,7 +1,8 @@
 # KumuluzEE Swagger
-[![Build Status](https://img.shields.io/travis/kumuluz/kumuluzee-openAPI/master.svg?style=flat)](https://travis-ci.org/kumuluz/kumuluzee-swagger)
+[![Build Status](https://img.shields.io/travis/kumuluz/kumuluzee-swagger/master.svg?style=flat)](https://travis-ci.org/kumuluz/kumuluzee-swagger)
 
-> KumuluzEE Swagger extension for the Kumuluz EE microservice framework. 
+> KumuluzEE Swagger extension provides powerful tools to incorporate the Swagger Specification to your microservice.
+
 
 KumuluzEE Swagger extension provides support for documenting APIs using Swagger/OpenAPI v2 compliant annotations. Extension automatically hooks-up servlet that 
 exposes API specification on endpoint ```/api-specs/<jax-rs application-base-path>/swagger.[json|yaml]```. Extension also provides SwaggerUI which is added to your project

@@ -8,13 +8,11 @@
     <artifactId>kumuluzee-swagger</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
-    <packaging>jar</packaging>
-
     <name>KumuluzEE Swagger</name>
 
     <inceptionYear>2017</inceptionYear>
     <description>
-        KumuluzEE Swagger extension for documenting REST APIs, exposing raw Swagger definition of the API and Swagger-UI for visualization and API interaction.
+        KumuluzEE Swagger extension provides powerful tools to incorporate the Swagger Specification to your microservice.
     </description>
 
     <url>https://ee.kumuluz.com</url>
@@ -38,6 +36,12 @@
         <maven-plugin-plugin.version>3.5</maven-plugin-plugin.version>
         <maven-dependency-plugin.version>3.0.1</maven-dependency-plugin.version>
     </properties>
+
+    <scm>
+        <connection>scm:git:git@github.com:kumuluz/kumuluzee-swagger.git</connection>
+        <developerConnection>scm:git:git@github.com:kumuluz/kumuluzee-swagger.git</developerConnection>
+        <url>git@github.com:kumuluz/kumuluzee-swagger.git</url>
+    </scm>
 
     <issueManagement>
         <system>GitHub Issues</system>
