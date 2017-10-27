@@ -1,10 +1,9 @@
 # KumuluzEE Swagger
 [![Build Status](https://img.shields.io/travis/kumuluz/kumuluzee-swagger/master.svg?style=flat)](https://travis-ci.org/kumuluz/kumuluzee-swagger)
 
-> KumuluzEE Swagger extension provides powerful tools to incorporate the Swagger Specification to your microservice.
+> KumuluzEE Swagger extension provides powerful tools to incorporate and visualize the Swagger (OpenAPI 2.0) specification to your microservice.
 
-
-KumuluzEE Swagger extension provides support for documenting APIs using Swagger/OpenAPI v2 compliant annotations. Extension automatically hooks-up servlet that 
+KumuluzEE Swagger (OpenAPI 2.0) extension provides support for documenting APIs using Swagger/OpenAPI v2 compliant annotations. Extension automatically hooks-up servlet that 
 exposes API specification on endpoint ```/api-specs/<jax-rs application-base-path>/swagger.[json|yaml]```. Extension also provides SwaggerUI which is added to your project
 to visualize API documentation and allow API consumers to interact with API endpoints.
  
@@ -21,18 +20,18 @@ You can enable the KumuluzEE Swagger support by adding the following dependency:
 </dependency>
 ```
 
-### Swagger configuration
+## Swagger configuration
 
 When kumuluzee-swagger dependnecy is included in the project, you can start documenting your REST API using [Swagger-Core Annotations](https://github.com/swagger-api/swagger-core/wiki/Annotations-1.5.X).
 
-#### Documenting application class:
+### Documenting application class
 ```java
 @SwaggerDefinition(info = @Info(title = "CustomersAPI", version = "v1.0.0"), host = "localhost:8080")
 @ApplicationPath("v1")
 public class CustomerApplication extends Application { ... }
 ```
 
-#### Documenting resource class and operations:
+### Documenting resource class and operations
 ```java
 @Path("customer")
 @Api
@@ -54,7 +53,7 @@ public class CustomerResource {
 }
 ```
 
-### Accessing API specification
+## Accessing API specification
 
 Build and run project using:
 
@@ -72,7 +71,7 @@ Example:
 http://localhost:8080/api-specs/v1/swagger.json
 
 
-### Adding Swagger-UI
+## Adding Swagger-UI
 
 To serve API specification in visual form and to allow API consumers to interact with API resources you can add Swagger-UI by setting 
  **includeSwaggerUI** to ***true*** in **kumuluzee-maven-plugin** configuration.
@@ -90,7 +89,7 @@ After startup Swagger-UI is available at: http://localhost:8080/api-specs/ui (fo
 By default Swagger-UI will not be added to application.
 
 
-### Support for mutliple JAX-RS Application classes in single microservice
+## Support for mutliple JAX-RS Application classes in single microservice
 
 If your microservice contains multiple JAX-RS Applications, e.g. two versions of API, you have to privde some additional configuration for Swagger.
 
@@ -134,7 +133,7 @@ and second, you have to provide list of packages to Swagger-UI for each JAX-RS A
 </configuration>
 ```
 
-Multiple JAX-RS applications in singe JAR only work without CDI.
+Multiple JAX-RS applications in singe JAR work without CDI only.
 
 ## Changelog
 
