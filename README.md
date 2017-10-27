@@ -134,6 +134,8 @@ and second, you have to provide list of packages to Swagger-UI for each JAX-RS A
 </configuration>
 ```
 
+Multiple JAX-RS applications in singe JAR only wwork without CDI.
+
 ## Changelog
 
 Recent changes can be viewed on Github on the [Releases Page](https://github.com/kumuluz/kumuluzee-swagger/releases)
