@@ -8,7 +8,9 @@ import com.kumuluz.ee.common.dependencies.EeComponentDependency;
 import com.kumuluz.ee.common.dependencies.EeComponentType;
 import com.kumuluz.ee.common.dependencies.EeExtensionDef;
 import com.kumuluz.ee.common.wrapper.KumuluzServerWrapper;
+import com.kumuluz.ee.configuration.utils.ConfigurationUtil;
 import com.kumuluz.ee.jetty.JettyServletServer;
+import com.kumuluz.ee.swagger.filters.SwaggerUIFilter;
 import com.kumuluz.ee.swagger.models.SwaggerConfiguration;
 import com.kumuluz.ee.swagger.servlets.ApiListingServlet;
 import io.swagger.annotations.SwaggerDefinition;
@@ -44,89 +46,97 @@ public class SwaggerExtension implements Extension {
     public void init(KumuluzServerWrapper kumuluzServerWrapper, EeConfig eeConfig) {
         if (kumuluzServerWrapper.getServer() instanceof JettyServletServer) {
 
-            LOG.info("Initializing Swagger extension.");
+            ConfigurationUtil configurationUtil = ConfigurationUtil.getInstance();
 
-            JettyServletServer server = (JettyServletServer) kumuluzServerWrapper.getServer();
+            if (configurationUtil.getBoolean("kumuluzee.swagger.enabled").orElse(true)) {
 
-            List<Application> applications = new ArrayList<>();
-            ServiceLoader.load(Application.class).forEach(applications::add);
+                LOG.info("Initializing Swagger extension.");
 
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
+                JettyServletServer server = (JettyServletServer) kumuluzServerWrapper.getServer();
 
-            for (Application application : applications) {
+                List<Application> applications = new ArrayList<>();
+                ServiceLoader.load(Application.class).forEach(applications::add);
 
-                Class<?> applicationClass = application.getClass();
-                if (targetClassIsProxied(applicationClass)) {
-                    applicationClass = applicationClass.getSuperclass();
-                }
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
 
-                String applicationPath = "";
-                ApplicationPath applicationPathAnnotation = applicationClass.getAnnotation(ApplicationPath.class);
-                if (applicationPathAnnotation != null) {
-                    applicationPath = applicationPathAnnotation.value();
-                } else {
-                    SwaggerDefinition swaggerAnnotation = applicationClass.getAnnotation(SwaggerDefinition.class);
-                    applicationPath = swaggerAnnotation.basePath();
-                }
+                for (Application application : applications) {
 
-                applicationPath = StringUtils.strip(applicationPath, "/");
-
-                InputStream is = null;
-                if (applicationPath.equals("")) {
-                    is = getClass().getClassLoader().getResourceAsStream("api-specs/swagger-configuration.json");
-                } else {
-                    is = getClass().getClassLoader().getResourceAsStream("api-specs/" + applicationPath +
-                            "/swagger-configuration.json");
-                }
-
-                SwaggerConfiguration swaggerConfiguration = null;
-                try {
-                    swaggerConfiguration = mapper.readValue(is, SwaggerConfiguration.class);
-                } catch (IOException e) {
-                    LOG.warning("Unable to load swagger configuration. Swagger specification will not be served.");
-                    continue;
-                }
-
-                BeanConfig beanConfig = new BeanConfig();
-
-                if (swaggerConfiguration != null) {
-                    Map<String, String> parameters = new HashMap<>();
-
-                    beanConfig.setSchemes(swaggerConfiguration.getSwagger().getSchemes().stream().map(Scheme::toValue).toArray
-                            (String[]::new));
-                    beanConfig.setHost(swaggerConfiguration.getSwagger().getHost());
-                    beanConfig.setBasePath(swaggerConfiguration.getSwagger().getBasePath());
-                    if (applications.size() == 1) {
-                        beanConfig.setResourcePackage(swaggerConfiguration.getResourcePackagesAsString());
-                    } else {
-
-                        Set<Class<?>> resources = application.getClasses();
-                        Set<String> resourcePackages = resources.stream().map(r -> r.getPackage().getName()).collect(Collectors
-                                .toSet());
-
-                        String packages = StringUtils.join(resourcePackages, ",");
-
-                        beanConfig.setResourcePackage(packages);
+                    Class<?> applicationClass = application.getClass();
+                    if (targetClassIsProxied(applicationClass)) {
+                        applicationClass = applicationClass.getSuperclass();
                     }
 
-                    beanConfig.getSwagger().setInfo(swaggerConfiguration.getSwagger().getInfo());
-                    beanConfig.setScannerId(applicationPath);
-                    beanConfig.setPrettyPrint(true);
-                    beanConfig.setConfigId(applicationPath);
-                    parameters.put("swagger.scanner.id", applicationPath);
-                    parameters.put("swagger.config.id", applicationPath);
-                    beanConfig.setScan(true);
+                    String applicationPath = "";
+                    ApplicationPath applicationPathAnnotation = applicationClass.getAnnotation(ApplicationPath.class);
+                    if (applicationPathAnnotation != null) {
+                        applicationPath = applicationPathAnnotation.value();
+                    } else {
+                        SwaggerDefinition swaggerAnnotation = applicationClass.getAnnotation(SwaggerDefinition.class);
+                        applicationPath = swaggerAnnotation.basePath();
+                    }
 
+                    applicationPath = StringUtils.strip(applicationPath, "/");
+
+                    InputStream is = null;
                     if (applicationPath.equals("")) {
-                        server.registerServlet(ApiListingServlet.class, "/api-specs/*", parameters, 1);
+                        is = getClass().getClassLoader().getResourceAsStream("api-specs/swagger-configuration.json");
                     } else {
-                        server.registerServlet(ApiListingServlet.class, "/api-specs/" + applicationPath + "/*", parameters, 1);
+                        is = getClass().getClassLoader().getResourceAsStream("api-specs/" + applicationPath +
+                                "/swagger-configuration.json");
+                    }
+
+                    SwaggerConfiguration swaggerConfiguration = null;
+                    try {
+                        swaggerConfiguration = mapper.readValue(is, SwaggerConfiguration.class);
+                    } catch (IOException e) {
+                        LOG.warning("Unable to load swagger configuration. Swagger specification will not be served.");
+                        continue;
+                    }
+
+                    BeanConfig beanConfig = new BeanConfig();
+
+                    if (swaggerConfiguration != null) {
+                        Map<String, String> parameters = new HashMap<>();
+
+                        beanConfig.setSchemes(swaggerConfiguration.getSwagger().getSchemes().stream().map(Scheme::toValue).toArray
+                                (String[]::new));
+                        beanConfig.setHost(swaggerConfiguration.getSwagger().getHost());
+                        beanConfig.setBasePath(swaggerConfiguration.getSwagger().getBasePath());
+                        if (applications.size() == 1) {
+                            beanConfig.setResourcePackage(swaggerConfiguration.getResourcePackagesAsString());
+                        } else {
+
+                            Set<Class<?>> resources = application.getClasses();
+                            Set<String> resourcePackages = resources.stream().map(r -> r.getPackage().getName()).collect(Collectors
+                                    .toSet());
+
+                            String packages = StringUtils.join(resourcePackages, ",");
+
+                            beanConfig.setResourcePackage(packages);
+                        }
+
+                        beanConfig.getSwagger().setInfo(swaggerConfiguration.getSwagger().getInfo());
+                        beanConfig.setScannerId(applicationPath);
+                        beanConfig.setPrettyPrint(true);
+                        beanConfig.setConfigId(applicationPath);
+                        parameters.put("swagger.scanner.id", applicationPath);
+                        parameters.put("swagger.config.id", applicationPath);
+                        beanConfig.setScan(true);
+
+                        if (applicationPath.equals("")) {
+                            server.registerServlet(ApiListingServlet.class, "/api-specs/*", parameters, 1);
+                        } else {
+                            server.registerServlet(ApiListingServlet.class, "/api-specs/" + applicationPath + "/*", parameters, 1);
+                        }
                     }
                 }
-            }
 
-            LOG.info("Swagger extension initialized.");
+                LOG.info("Swagger extension initialized.");
+            } else {
+                JettyServletServer server = (JettyServletServer) kumuluzServerWrapper.getServer();
+                server.registerFilter(SwaggerUIFilter.class, "/api-specs/ui");
+            }
         }
     }
 
