@@ -135,7 +135,7 @@ public class SwaggerExtension implements Extension {
                 LOG.info("Swagger extension initialized.");
             } else {
                 JettyServletServer server = (JettyServletServer) kumuluzServerWrapper.getServer();
-                server.registerFilter(SwaggerUIFilter.class, "/api-specs/ui");
+                server.registerFilter(SwaggerUIFilter.class, "/api-specs/*");
             }
         }
     }
