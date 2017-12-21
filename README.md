@@ -70,6 +70,8 @@ Example:
 
 http://localhost:8080/api-specs/v1/swagger.json
 
+Swagger specification can be disabled by setting property **kumuluzee.swagger.spec.enabled** to false, by default spec is enabled.
+
 
 ## Adding Swagger-UI
 
