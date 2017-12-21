@@ -156,7 +156,6 @@ public class SwaggerExtension implements Extension {
                             server.registerServlet(ApiListingServlet.class, "/api-specs/" + applicationPath + "/*", parameters, 1);
                         }
 
-
                         Map<String, String> swaggerUiParams = new HashMap<>();
                         URL webApp = ResourceUtils.class.getClassLoader().getResource("swagger-ui");
 
@@ -167,9 +166,9 @@ public class SwaggerExtension implements Extension {
                             Map<String, String> swaggerUiFilterParams = new HashMap<>();
 
                             swaggerUiFilterParams.put("url", serverUrl + "/api-specs/" + applicationPath + "/swagger.json");
-                            server.registerFilter(SwaggerUIFilter.class, "/api-specs/*", swaggerUiFilterParams);
+                            server.registerFilter(SwaggerUIFilter.class, "/api-specs/ui/*", swaggerUiFilterParams);
                         } else {
-                            LOG.severe("Unable to find Swagger-UI artifacts.");
+                            LOG.warning("Unable to find Swagger-UI artifacts or Swagger UI is disabled.");
                         }
 
                     }
