@@ -7,6 +7,7 @@ import com.kumuluz.ee.common.config.EeConfig;
 import com.kumuluz.ee.common.dependencies.EeComponentDependency;
 import com.kumuluz.ee.common.dependencies.EeComponentType;
 import com.kumuluz.ee.common.dependencies.EeExtensionDef;
+import com.kumuluz.ee.common.utils.ResourceUtils;
 import com.kumuluz.ee.common.wrapper.KumuluzServerWrapper;
 import com.kumuluz.ee.configuration.utils.ConfigurationUtil;
 import com.kumuluz.ee.jetty.JettyServletServer;
@@ -17,11 +18,13 @@ import io.swagger.annotations.SwaggerDefinition;
 import io.swagger.jaxrs.config.BeanConfig;
 import io.swagger.models.Scheme;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jetty.servlet.DefaultServlet;
 
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -48,7 +51,7 @@ public class SwaggerExtension implements Extension {
 
             ConfigurationUtil configurationUtil = ConfigurationUtil.getInstance();
 
-            if (configurationUtil.getBoolean("kumuluzee.swagger.enabled").orElse(true)) {
+            if (configurationUtil.getBoolean("kumuluzee.swagger.spec.enabled").orElse(true)) {
 
                 LOG.info("Initializing Swagger extension.");
 
@@ -60,7 +63,8 @@ public class SwaggerExtension implements Extension {
                 ObjectMapper mapper = new ObjectMapper();
                 mapper.enable(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT);
 
-                for (Application application : applications) {
+                if (applications.size() == 1) {
+                    Application application = applications.get(0);
 
                     Class<?> applicationClass = application.getClass();
                     if (targetClassIsProxied(applicationClass)) {
@@ -69,11 +73,33 @@ public class SwaggerExtension implements Extension {
 
                     String applicationPath = "";
                     ApplicationPath applicationPathAnnotation = applicationClass.getAnnotation(ApplicationPath.class);
+                    SwaggerDefinition swaggerAnnotation = applicationClass.getAnnotation(SwaggerDefinition.class);
+
+
+                    Optional<Integer> port = ConfigurationUtil.getInstance().getInteger("kumuluzee.server.http.port");
+
+                    String serverUrl = "http://localhost" + (port.map(Object::toString).orElse(""));
+
+                    if (swaggerAnnotation != null) {
+                        if (!swaggerAnnotation.host().equals("")) {
+                            serverUrl = swaggerAnnotation.host();
+                        }
+
+                        List<SwaggerDefinition.Scheme> schemas = Arrays.asList(swaggerAnnotation.schemes());
+
+                        if (schemas.contains(SwaggerDefinition.Scheme.DEFAULT) || schemas.contains(SwaggerDefinition.Scheme.HTTP)) {
+                            serverUrl = "http://" + serverUrl;
+                        } else if (schemas.contains(SwaggerDefinition.Scheme.HTTPS)) {
+                            serverUrl = "https://" + serverUrl;
+                        }
+                    }
+
                     if (applicationPathAnnotation != null) {
                         applicationPath = applicationPathAnnotation.value();
                     } else {
-                        SwaggerDefinition swaggerAnnotation = applicationClass.getAnnotation(SwaggerDefinition.class);
-                        applicationPath = swaggerAnnotation.basePath();
+                        if (swaggerAnnotation != null) {
+                            applicationPath = swaggerAnnotation.basePath();
+                        }
                     }
 
                     applicationPath = StringUtils.strip(applicationPath, "/");
@@ -91,7 +117,7 @@ public class SwaggerExtension implements Extension {
                         swaggerConfiguration = mapper.readValue(is, SwaggerConfiguration.class);
                     } catch (IOException e) {
                         LOG.warning("Unable to load swagger configuration. Swagger specification will not be served.");
-                        continue;
+                        return;
                     }
 
                     BeanConfig beanConfig = new BeanConfig();
@@ -129,13 +155,30 @@ public class SwaggerExtension implements Extension {
                         } else {
                             server.registerServlet(ApiListingServlet.class, "/api-specs/" + applicationPath + "/*", parameters, 1);
                         }
-                    }
-                }
 
-                LOG.info("Swagger extension initialized.");
-            } else {
-                JettyServletServer server = (JettyServletServer) kumuluzServerWrapper.getServer();
-                server.registerFilter(SwaggerUIFilter.class, "/api-specs/*");
+
+                        Map<String, String> swaggerUiParams = new HashMap<>();
+                        URL webApp = ResourceUtils.class.getClassLoader().getResource("swagger-ui");
+
+                        if (webApp != null && configurationUtil.getBoolean("kumuluzee.swagger.ui.enabled").orElse(false)) {
+                            swaggerUiParams.put("resourceBase", webApp.toString());
+                            server.registerServlet(DefaultServlet.class, "/api-specs/ui/*", swaggerUiParams, 1);
+
+                            Map<String, String> swaggerUiFilterParams = new HashMap<>();
+
+                            swaggerUiFilterParams.put("url", serverUrl + "/api-specs/" + applicationPath + "/swagger.json");
+                            server.registerFilter(SwaggerUIFilter.class, "/api-specs/*", swaggerUiFilterParams);
+                        } else {
+                            LOG.severe("Unable to find Swagger-UI artifacts.");
+                        }
+
+                    }
+
+                    LOG.info("Swagger extension initialized.");
+
+                } else {
+                    LOG.warning("Multiple JAX-RS applications not supported. Swagger definitions will not be served.");
+                }
             }
         }
     }
