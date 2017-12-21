@@ -22,7 +22,7 @@ You can enable the KumuluzEE Swagger support by adding the following dependency:
 
 ## Swagger configuration
 
-When kumuluzee-swagger dependnecy is included in the project, you can start documenting your REST API using [Swagger-Core Annotations](https://github.com/swagger-api/swagger-core/wiki/Annotations-1.5.X).
+When kumuluzee-swagger dependency is included in the project, you can start documenting your REST API using [Swagger-Core Annotations](https://github.com/swagger-api/swagger-core/wiki/Annotations-1.5.X).
 
 ### Documenting application class
 ```java
@@ -70,7 +70,7 @@ Example:
 
 http://localhost:8080/api-specs/v1/swagger.json
 
-Swagger specification can be disabled by setting property **kumuluzee.swagger.spec.enabled** to false, by default spec is enabled.
+Serving Swagger specification can be disabled by setting property **kumuluzee.swagger.spec.enabled** to false. By default serving API spec is enabled.
 
 
 ## Adding Swagger-UI
