@@ -72,7 +72,6 @@ http://localhost:8080/api-specs/v1/swagger.json
 
 Serving Swagger specification can be disabled by setting property **kumuluzee.swagger.spec.enabled** to false. By default serving API spec is enabled.
 
-
 ## Adding Swagger-UI
 
 To serve API specification in visual form and to allow API consumers to interact with API resources you can add Swagger-UI by setting 
