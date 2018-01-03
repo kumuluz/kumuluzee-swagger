@@ -3,13 +3,14 @@ package com.kumuluz.ee.swagger.processor;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.kumuluz.ee.swagger.models.SwaggerConfiguration;
 import com.kumuluz.ee.swagger.utils.AnnotationProcessorUtil;
+import com.kumuluz.ee.swagger.models.SwaggerConfiguration;
 import io.swagger.annotations.SwaggerDefinition;
 import io.swagger.models.Contact;
 import io.swagger.models.License;
 import io.swagger.models.Scheme;
 import org.apache.commons.lang3.StringUtils;
+import com.kumuluz.ee.swagger.models.Swagger;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -19,7 +20,6 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.TypeMirror;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Application;
@@ -82,7 +82,7 @@ public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
         if (elements.size() != 0) {
             for (Element element : elements) {
 
-                com.kumuluz.ee.swagger.models.Swagger swagger = new com.kumuluz.ee.swagger.models.Swagger();
+                Swagger swagger = new Swagger();
                 io.swagger.models.Info info = new io.swagger.models.Info();
 
                 SwaggerDefinition swaggerDefinitionAnnotation = element.getAnnotation(SwaggerDefinition.class);

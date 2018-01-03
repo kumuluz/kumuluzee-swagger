@@ -1,8 +1,6 @@
 package com.kumuluz.ee.swagger.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.swagger.config.SwaggerConfig;
-import com.kumuluz.ee.swagger.models.Swagger;
 
 import java.util.Set;
 
