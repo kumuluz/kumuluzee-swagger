@@ -70,10 +70,19 @@ public class SwaggerUiExtension implements Extension {
                 ApplicationPath applicationPathAnnotation = applicationClass.getAnnotation(ApplicationPath.class);
                 SwaggerDefinition swaggerAnnotation = applicationClass.getAnnotation(SwaggerDefinition.class);
 
-                Optional<Integer> port = ConfigurationUtil.getInstance().getInteger("kumuluzee.server.http.port");
+                String serverUrl = "localhost";
+                Integer port = null;
 
-                String serverUrl = "http://localhost" + (port.map(Object::toString).orElse(""));
+                if (eeConfig.getServer().getHttp() != null) {
+                    port = eeConfig.getServer().getHttp().getPort();
+                    serverUrl = "http://" + serverUrl;
+                } else {
+                    port = eeConfig.getServer().getHttps().getPort();
+                    serverUrl = "https://" + serverUrl;
+                }
 
+                serverUrl += (port != null ? ":" + port.toString() : "");
+                
                 if (swaggerAnnotation != null) {
                     if (!swaggerAnnotation.host().equals("")) {
                         serverUrl = swaggerAnnotation.host();
