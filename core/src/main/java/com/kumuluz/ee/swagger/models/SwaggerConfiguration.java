@@ -5,7 +5,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Set;
 
 /**
- * Created by zvoneg on 26/09/2017.
+ * SwaggerConfiguration class.
+ *
+ * @author Zvone Gazvoda
+ * @since 2.5.0
  */
 public class SwaggerConfiguration {
     private Set<String> resourcePackages;

@@ -20,6 +20,12 @@ import java.net.URL;
 import java.util.*;
 import java.util.logging.Logger;
 
+/**
+ * SwaggerUiExtension class - hook-up servlets to expose api specifications.
+ *
+ * @author Zvone Gazvoda
+ * @since 1.0.0
+ */
 @EeExtensionDef(name = "Swagger-UI", group = "SWAGGER_UI")
 @EeComponentDependency(EeComponentType.JAX_RS)
 public class SwaggerUiExtension implements Extension {

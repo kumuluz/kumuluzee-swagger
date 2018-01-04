@@ -29,7 +29,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Created by zvoneg on 24/10/2017.
+ * ApiListingServlet class.
+ *
+ * @author Zvone Gazvoda
+ * @since 1.0.0
  */
 @WebServlet("/swagger.*")
 public class ApiListingServlet extends HttpServlet {

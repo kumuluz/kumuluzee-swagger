@@ -8,7 +8,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by zvoneg on 26/09/2017.
+ * Swagger class.
+ *
+ * @author Zvone Gazvoda
+ * @since 2.5.0
  */
 public class Swagger {
 
