@@ -84,7 +84,7 @@ To serve API specification in visual form and to allow API consumers to interact
  </dependency>
  ```
 
-Dependency will include SwaggerUI artifacts, in case you want to temporarily disable UI during you can set configuration property **kumuluzee.swagger.ui.enabled** to false:
+Dependency will include SwaggerUI artifacts, in case you want to temporarily disable UI you can set configuration property **kumuluzee.swagger.ui.enabled** to false:
 
 ```yaml
 kumuluzee:
