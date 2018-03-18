@@ -34,7 +34,7 @@ import javax.lang.model.util.Types;
  * JaxRsSwaggerAnnotationProcessor annotation processor class.
  *
  * @author Zvone Gazvoda
- * @since 2.5.0
+ * @since 1.0.0
  */
 public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
     private static final Logger LOG = Logger.getLogger(JaxRsSwaggerAnnotationProcessor.class.getName());

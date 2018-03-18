@@ -8,7 +8,7 @@ import java.util.Set;
  * SwaggerConfiguration class.
  *
  * @author Zvone Gazvoda
- * @since 2.5.0
+ * @since 1.0.0
  */
 public class SwaggerConfiguration {
     private Set<String> resourcePackages;

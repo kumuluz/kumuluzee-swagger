@@ -11,7 +11,7 @@ import java.util.Map;
  * Swagger class.
  *
  * @author Zvone Gazvoda
- * @since 2.5.0
+ * @since 1.0.0
  */
 public class Swagger {
 

@@ -82,7 +82,7 @@ public class SwaggerUiExtension implements Extension {
                 }
 
                 serverUrl += (port != null ? ":" + port.toString() : "");
-                
+
                 if (swaggerAnnotation != null) {
                     if (!swaggerAnnotation.host().equals("")) {
                         serverUrl = swaggerAnnotation.host();
