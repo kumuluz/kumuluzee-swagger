@@ -112,6 +112,11 @@
                 <artifactId>commons-lang3</artifactId>
                 <version>${apache-commons.version}</version>
             </dependency>
+            <dependency>
+                <groupId>javax.activation</groupId>
+                <artifactId>activation</artifactId>
+                <version>1.1.1</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -131,30 +136,11 @@
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>default-compile</id>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                        <configuration>
-                            <proc>none</proc>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>compile-important-processor</id>
-                        <phase>process-test-sources</phase>
-                        <goals>
-                            <goal>testCompile</goal>
-                        </goals>
-                        <configuration>
-                            <proc>none</proc>
-                            <testIncludes>
-                                <include>com/kumuluz/ee/swagger/processor/*</include>
-                            </testIncludes>
-                        </configuration>
-                    </execution>
-                </executions>
+                <configuration>
+                    <compilerArgument>
+                        -proc:none
+                    </compilerArgument>
+                </configuration>
             </plugin>
         </plugins>
     </build>
