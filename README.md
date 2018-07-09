@@ -1,10 +1,10 @@
 # KumuluzEE Swagger
 [![Build Status](https://img.shields.io/travis/kumuluz/kumuluzee-swagger/master.svg?style=flat)](https://travis-ci.org/kumuluz/kumuluzee-swagger)
 
-> KumuluzEE Swagger extension provides powerful tools to incorporate and visualize the Swagger (OpenAPI 2.0) specification to your microservice.
+> KumuluzEE Swagger project provides powerful tools to incorporate and visualize the Swagger (OpenAPI 2.0) specification to your microservice.
 
-KumuluzEE Swagger (OpenAPI 2.0) extension provides support for documenting APIs using Swagger/OpenAPI v2 compliant annotations. Extension automatically hooks-up servlet that 
-exposes API specification on endpoint ```/api-specs/<jax-rs application-base-path>/swagger.[json|yaml]```. Extension also provides SwaggerUI which is added to your project
+KumuluzEE Swagger (OpenAPI 2.0) project provides support for documenting APIs using Swagger/OpenAPI v2 compliant annotations. Project automatically hooks-up servlet that 
+exposes API specification on endpoint ```/api-specs/<jax-rs application-base-path>/swagger.[json|yaml]```. Project also provides SwaggerUI which is added to your project
 to visualize API documentation and allow API consumers to interact with API endpoints.
  
 More details: [Swagger Specification](https://github.com/OAI/OpenAPI-Specification/blob/3.0.0/versions/2.0.md).
