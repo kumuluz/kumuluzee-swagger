@@ -111,7 +111,7 @@ public class SwaggerUiExtension implements Extension {
                 URL webApp = ResourceUtils.class.getClassLoader().getResource("swagger-ui");
 
                 if (webApp != null && configurationUtil.getBoolean("kumuluzee.swagger.ui.enabled").orElse(true) && configurationUtil
-                        .getBoolean("kumuluzee.swagger.spec.enabled").orElse(true)) {
+                        .getBoolean("kumuluzee.swagger.enabled").orElse(true)) {
 
                     swaggerUiParams.put("resourceBase", webApp.toString());
                     server.registerServlet(DefaultServlet.class, "/api-specs/ui/*", swaggerUiParams, 1);

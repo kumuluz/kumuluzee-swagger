@@ -47,7 +47,7 @@ public class SwaggerExtension implements Extension {
 
             ConfigurationUtil configurationUtil = ConfigurationUtil.getInstance();
 
-            if (configurationUtil.getBoolean("kumuluzee.swagger.spec.enabled").orElse(true)) {
+            if (configurationUtil.getBoolean("kumuluzee.swagger.enabled").orElse(true)) {
 
                 LOG.info("Initializing Swagger extension.");
 

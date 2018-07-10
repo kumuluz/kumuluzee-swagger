@@ -95,6 +95,14 @@ kumuluzee:
 
 After the startup Swagger-UI is available at: http://localhost:8080/api-specs/ui.
 
+If you want to completely disable swagger extension you can set the following property **kumuluzee.swagger.enabled** to false:
+
+```yaml
+kumuluzee:
+  swagger:
+    enabled: false
+```
+
 ## Changelog
 
 Recent changes can be viewed on Github on the [Releases Page](https://github.com/kumuluz/kumuluzee-swagger/releases)
