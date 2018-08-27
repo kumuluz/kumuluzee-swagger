@@ -21,6 +21,8 @@ import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.core.Application;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -96,10 +98,28 @@ public class SwaggerExtension implements Extension {
 
                     Map<String, String> parameters = new HashMap<>();
 
-                    beanConfig.setSchemes(swaggerConfiguration.getSwagger().getSchemes().stream().map(Scheme::toValue).toArray
-                            (String[]::new));
-                    beanConfig.setHost(swaggerConfiguration.getSwagger().getHost());
-                    beanConfig.setBasePath(swaggerConfiguration.getSwagger().getBasePath());
+                    URL baseUrl = null;
+                    try {
+                        baseUrl = new URL(eeConfig.getServer().getBaseUrl());
+
+                        beanConfig.setSchemes(new String[]{baseUrl.getProtocol()});
+                        beanConfig.setHost(baseUrl.getHost());
+                        beanConfig.setBasePath(baseUrl.getPath());
+                        
+                    } catch (MalformedURLException e) {
+                        LOG.warning("kumuluzee.server.base-url not set. Using default values.");
+                    }
+
+                    if (beanConfig.getSchemes() == null || beanConfig.getSchemes().length == 0) {
+                        beanConfig.setSchemes(swaggerConfiguration.getSwagger().getSchemes().stream().map(Scheme::toValue).toArray
+                                (String[]::new));
+                    }
+                    if (beanConfig.getHost() != null) {
+                        beanConfig.setHost(swaggerConfiguration.getSwagger().getHost());
+                    }
+                    if (beanConfig.getBasePath() != null) {
+                        beanConfig.setBasePath(swaggerConfiguration.getSwagger().getBasePath());
+                    }
 
                     if (applications.size() == 1) {
                         beanConfig.setResourcePackage(swaggerConfiguration.getResourcePackagesAsString());

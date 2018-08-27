@@ -4,6 +4,7 @@ import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.regex.Pattern;
 
 /**
  * SwaggerUIFilter class.
@@ -30,26 +31,22 @@ public class SwaggerUIFilter implements Filter {
         String path = httpServletRequest.getServletPath();
 
         if (path.contains("/ui")) {
-            if ((httpServletRequest.getQueryString() == null || !httpServletRequest.getQueryString().contains
-                    ("url"))) {
-                String url = filterConfig.getInitParameter("url");
-                if (httpServletRequest.getPathInfo() != null) {
-                    httpServletResponse.sendRedirect("/api-specs/ui" + httpServletRequest.getPathInfo() + "?url=" + url);
-                } else {
-                    httpServletResponse.sendRedirect("/api-specs/ui/?url=" + url);
-                }
-            } else {
+            Pattern pattern = Pattern.compile("^(.*?)(css|js|url)(.*)$");
+            String request_query_string = (httpServletRequest.getQueryString() != null) ? httpServletRequest.getRequestURI() +
+                    httpServletRequest.getQueryString() : httpServletRequest.getRequestURI();
+            if ((pattern.matcher(request_query_string).find())) {
                 filterChain.doFilter(httpServletRequest, httpServletResponse);
+            } else {
+                String url = filterConfig.getInitParameter("url");
+                String servletPath = filterConfig.getInitParameter("servlet");
+                httpServletResponse.sendRedirect(servletPath + "/api-specs/ui/?url=" + url);
             }
-
         } else {
             filterChain.doFilter(servletRequest, servletResponse);
         }
-
     }
 
     @Override
     public void destroy() {
-
     }
 }
