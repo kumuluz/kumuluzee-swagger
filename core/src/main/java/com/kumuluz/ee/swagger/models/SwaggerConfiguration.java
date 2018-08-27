@@ -2,6 +2,7 @@ package com.kumuluz.ee.swagger.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -14,8 +15,12 @@ public class SwaggerConfiguration {
     private Set<String> resourcePackages;
     private Swagger swagger;
     private String applicationClass;
+    private String swaggerDefinitionClass;
 
     public Set<String> getResourcePackages() {
+        if (resourcePackages == null) {
+            resourcePackages = new HashSet<>();
+        }
         return resourcePackages;
     }
 
@@ -48,5 +53,13 @@ public class SwaggerConfiguration {
 
     public void setApplicationClass(String applicationClass) {
         this.applicationClass = applicationClass;
+    }
+
+    public String getSwaggerDefinitionClass() {
+        return swaggerDefinitionClass;
+    }
+
+    public void setSwaggerDefinitionClass(String swaggerDefinitionClass) {
+        this.swaggerDefinitionClass = swaggerDefinitionClass;
     }
 }

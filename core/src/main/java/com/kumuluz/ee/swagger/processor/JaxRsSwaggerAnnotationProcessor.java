@@ -3,14 +3,14 @@ package com.kumuluz.ee.swagger.processor;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.kumuluz.ee.swagger.utils.AnnotationProcessorUtil;
+import com.kumuluz.ee.swagger.models.Swagger;
 import com.kumuluz.ee.swagger.models.SwaggerConfiguration;
+import com.kumuluz.ee.swagger.utils.AnnotationProcessorUtil;
 import io.swagger.annotations.SwaggerDefinition;
 import io.swagger.models.Contact;
 import io.swagger.models.License;
 import io.swagger.models.Scheme;
 import org.apache.commons.lang3.StringUtils;
-import com.kumuluz.ee.swagger.models.Swagger;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Filer;
@@ -20,15 +20,13 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.Types;
 import javax.ws.rs.ApplicationPath;
 import javax.ws.rs.Path;
-import javax.ws.rs.core.Application;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
-import javax.lang.model.util.Types;
 
 /**
  * JaxRsSwaggerAnnotationProcessor annotation processor class.
@@ -41,6 +39,7 @@ public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
 
     private Set<String> applicationElementNames = new HashSet<>();
     private Set<String> resourceElementNames = new HashSet<>();
+    private Set<String> swaggerElementNames = new HashSet<>();
 
     private Filer filer;
 
@@ -62,7 +61,9 @@ public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        Set<? extends Element> elements;
+        Set<? extends Element> swaggerElements;
+        Set<? extends Element> jaxRSElements;
+        Set<? extends Element> resourceElements;
 
         try {
             Class.forName("javax.ws.rs.core.Application");
@@ -71,23 +72,30 @@ public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
             return false;
         }
 
-        elements = roundEnv.getElementsAnnotatedWith(Path.class);
-        elements.forEach(e -> getElementPackage(resourceElementNames, e));
+        resourceElements = roundEnv.getElementsAnnotatedWith(Path.class);
+        resourceElements.forEach(e -> getElementPackage(resourceElementNames, e));
 
-        elements = roundEnv.getElementsAnnotatedWith(SwaggerDefinition.class);
-        elements.forEach(e -> getElementName(applicationElementNames, e, processingEnv.getTypeUtils()));
+        swaggerElements = roundEnv.getElementsAnnotatedWith(SwaggerDefinition.class);
+        swaggerElements.forEach(e -> getElementName(swaggerElementNames, e, processingEnv.getTypeUtils()));
 
-        SwaggerConfiguration config = null;
+        jaxRSElements = roundEnv.getElementsAnnotatedWith(ApplicationPath.class);
+        jaxRSElements.forEach(e -> getElementName(applicationElementNames, e, processingEnv
+                .getTypeUtils()));
 
-        if (elements.size() != 0) {
-            for (Element element : elements) {
+        SwaggerConfiguration config = new SwaggerConfiguration();
 
-                Swagger swagger = new Swagger();
-                io.swagger.models.Info info = new io.swagger.models.Info();
+        if (jaxRSElements.size() == 1) {
+            Swagger swagger = new Swagger();
+            io.swagger.models.Info info = new io.swagger.models.Info();
+
+            for (Element element : swaggerElements) {
 
                 SwaggerDefinition swaggerDefinitionAnnotation = element.getAnnotation(SwaggerDefinition.class);
 
                 if (swaggerDefinitionAnnotation != null) {
+
+                    config.setSwaggerDefinitionClass(element.toString());
+
                     info.setTitle(swaggerDefinitionAnnotation.info().title());
                     info.setVersion(swaggerDefinitionAnnotation.info().version());
 
@@ -128,18 +136,6 @@ public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
 
                     swagger.setInfo(info);
 
-                    ApplicationPath applicationPathAnnotation = element.getAnnotation(ApplicationPath.class);
-                    if (applicationPathAnnotation != null) {
-                        swagger.setBasePath(applicationPathAnnotation.value());
-                    } else {
-                        swagger.setBasePath(swaggerDefinitionAnnotation.basePath());
-                    }
-
-                    if (swagger.getBasePath() == null || swagger.getBasePath().equals("")) {
-                        LOG.warning("Unable to obtain API Base path. Provide @ApplicationPath or set basePath in @SwaggerDefinition.");
-                        continue;
-                    }
-
                     List<Scheme> schemes = Arrays.stream(swaggerDefinitionAnnotation.schemes()).map(s -> {
                         Scheme scheme = null;
 
@@ -171,34 +167,53 @@ public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
                     swagger.setSchemes(schemes);
                     swagger.setHost(swaggerDefinitionAnnotation.host());
 
-
-                    config = new SwaggerConfiguration();
-
                     config.setSwagger(swagger);
+
                     if (applicationElementNames.size() == 1) {
-                        config.setResourcePackages(resourceElementNames);
-                    }
+                        Set<String> swaggerElementPackages = new HashSet<>();
 
-                    try {
-                        ObjectMapper mapper = new ObjectMapper();
-                        mapper.enable(SerializationFeature.INDENT_OUTPUT);
-                        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-                        String jsonOAC = mapper.writeValueAsString(config);
-
-                        String path = swagger.getBasePath();
-
-                        path = StringUtils.strip(path, "/");
-
-                        if (path.equals("")) {
-                            AnnotationProcessorUtil.writeFile(jsonOAC, "api-specs/swagger-configuration.json", filer);
-                        } else {
-                            AnnotationProcessorUtil.writeFile(jsonOAC, "api-specs/" + path + "/swagger-configuration.json", filer);
+                        for (String ele : swaggerElementNames) {
+                            swaggerElementPackages.add(ele.substring(0, ele.lastIndexOf('.')));
                         }
-                    } catch (IOException e) {
-                        LOG.warning(e.getMessage());
-                    }
 
+                        swaggerElementPackages.addAll(resourceElementNames);
+
+                        config.getResourcePackages().addAll(swaggerElementPackages);
+                    }
                 }
+            }
+
+            for (Element element : jaxRSElements) {
+
+                ApplicationPath applicationPathAnnotation = element.getAnnotation(ApplicationPath.class);
+
+                if (applicationPathAnnotation != null) {
+                    config.setApplicationClass(element.toString());
+                    swagger.setBasePath(applicationPathAnnotation.value());
+                }
+
+                if (swagger.getBasePath() == null || swagger.getBasePath().equals("")) {
+                    LOG.warning("Unable to obtain API Base path. Provide @ApplicationPath.");
+                }
+            }
+
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.enable(SerializationFeature.INDENT_OUTPUT);
+                mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+                String jsonOAC = mapper.writeValueAsString(config);
+
+                String path = swagger.getBasePath();
+
+                path = StringUtils.strip(path, "/");
+
+                if ("".equals(path)) {
+                    AnnotationProcessorUtil.writeFile(jsonOAC, "api-specs/swagger-configuration.json", filer);
+                } else {
+                    AnnotationProcessorUtil.writeFile(jsonOAC, "api-specs/" + path + "/swagger-configuration.json", filer);
+                }
+            } catch (IOException e) {
+                LOG.warning(e.getMessage());
             }
 
             try {
@@ -220,14 +235,12 @@ public class JaxRsSwaggerAnnotationProcessor extends AbstractProcessor {
         }
     }
 
-    private void getElementName(Set<String> jaxRsElementNames, Element e, Types types) {
+    private void getElementName(Set<String> elementNames, Element e, Types types) {
 
         ElementKind elementKind = e.getKind();
 
         if (elementKind.equals(ElementKind.CLASS)) {
-            if (((TypeElement) e).getSuperclass().toString().equals(Application.class.getTypeName())) {
-                jaxRsElementNames.add(e.toString());
-            }
+            elementNames.add(e.toString());
         }
     }
 }

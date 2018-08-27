@@ -69,14 +69,9 @@ public class SwaggerExtension implements Extension {
 
                     String applicationPath = "";
                     ApplicationPath applicationPathAnnotation = applicationClass.getAnnotation(ApplicationPath.class);
-                    SwaggerDefinition swaggerAnnotation = applicationClass.getAnnotation(SwaggerDefinition.class);
 
                     if (applicationPathAnnotation != null) {
                         applicationPath = applicationPathAnnotation.value();
-                    } else {
-                        if (swaggerAnnotation != null) {
-                            applicationPath = swaggerAnnotation.basePath();
-                        }
                     }
 
                     applicationPath = StringUtils.strip(applicationPath, "/");
@@ -99,39 +94,38 @@ public class SwaggerExtension implements Extension {
 
                     BeanConfig beanConfig = new BeanConfig();
 
-                    if (swaggerConfiguration != null) {
-                        Map<String, String> parameters = new HashMap<>();
+                    Map<String, String> parameters = new HashMap<>();
 
-                        beanConfig.setSchemes(swaggerConfiguration.getSwagger().getSchemes().stream().map(Scheme::toValue).toArray
-                                (String[]::new));
-                        beanConfig.setHost(swaggerConfiguration.getSwagger().getHost());
-                        beanConfig.setBasePath(swaggerConfiguration.getSwagger().getBasePath());
-                        if (applications.size() == 1) {
-                            beanConfig.setResourcePackage(swaggerConfiguration.getResourcePackagesAsString());
-                        } else {
+                    beanConfig.setSchemes(swaggerConfiguration.getSwagger().getSchemes().stream().map(Scheme::toValue).toArray
+                            (String[]::new));
+                    beanConfig.setHost(swaggerConfiguration.getSwagger().getHost());
+                    beanConfig.setBasePath(swaggerConfiguration.getSwagger().getBasePath());
 
-                            Set<Class<?>> resources = application.getClasses();
-                            Set<String> resourcePackages = resources.stream().map(r -> r.getPackage().getName()).collect(Collectors
-                                    .toSet());
+                    if (applications.size() == 1) {
+                        beanConfig.setResourcePackage(swaggerConfiguration.getResourcePackagesAsString());
+                    } else {
 
-                            String packages = StringUtils.join(resourcePackages, ",");
+                        Set<Class<?>> resources = application.getClasses();
+                        Set<String> resourcePackages = resources.stream().map(r -> r.getPackage().getName()).collect(Collectors
+                                .toSet());
 
-                            beanConfig.setResourcePackage(packages);
-                        }
+                        String packages = StringUtils.join(resourcePackages, ",");
 
-                        beanConfig.getSwagger().setInfo(swaggerConfiguration.getSwagger().getInfo());
-                        beanConfig.setScannerId(applicationPath);
-                        beanConfig.setPrettyPrint(true);
-                        beanConfig.setConfigId(applicationPath);
-                        parameters.put("swagger.scanner.id", applicationPath);
-                        parameters.put("swagger.config.id", applicationPath);
-                        beanConfig.setScan(true);
+                        beanConfig.setResourcePackage(packages);
+                    }
 
-                        if (applicationPath.equals("")) {
-                            server.registerServlet(ApiListingServlet.class, "/api-specs/*", parameters, 1);
-                        } else {
-                            server.registerServlet(ApiListingServlet.class, "/api-specs/" + applicationPath + "/*", parameters, 1);
-                        }
+                    beanConfig.getSwagger().setInfo(swaggerConfiguration.getSwagger().getInfo());
+                    beanConfig.setScannerId(applicationPath);
+                    beanConfig.setPrettyPrint(true);
+                    beanConfig.setConfigId(applicationPath);
+                    parameters.put("swagger.scanner.id", applicationPath);
+                    parameters.put("swagger.config.id", applicationPath);
+                    beanConfig.setScan(true);
+
+                    if (applicationPath.equals("")) {
+                        server.registerServlet(ApiListingServlet.class, "/api-specs/*", parameters, 1);
+                    } else {
+                        server.registerServlet(ApiListingServlet.class, "/api-specs/" + applicationPath + "/*", parameters, 1);
                     }
 
                     LOG.info("Swagger extension initialized.");
