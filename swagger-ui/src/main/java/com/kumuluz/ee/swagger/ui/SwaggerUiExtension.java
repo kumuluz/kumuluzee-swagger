@@ -71,8 +71,6 @@ public class SwaggerUiExtension implements Extension {
                 ApplicationPath applicationPathAnnotation = applicationClass.getAnnotation(ApplicationPath.class);
                 SwaggerDefinition swaggerAnnotation = applicationClass.getAnnotation(SwaggerDefinition.class);
 
-                Integer port = null;
-
                 String serverBaseUrl = configurationUtil.get("kumuluzee.swagger.base-url").orElse("");
 
                 URL serviceBaseUrl = null;
@@ -101,18 +99,8 @@ public class SwaggerUiExtension implements Extension {
                     }
                 }
 
-                String serverUrl = null;
-
-                if (eeConfig.getServer().getHttp().getPort() != null) {
-                    port = eeConfig.getServer().getHttp().getPort();
-                    serverUrl = "http://" + serviceBaseUrl.getHost() + ((port != null) ? ":" + port.toString() : "");
-                } else if (eeConfig.getServer().getHttps().getPort() != null) {
-                    port = eeConfig.getServer().getHttps().getPort();
-                    serverUrl = "https://" + serviceBaseUrl.getHost() + ((port != null) ? ":" + port.toString() : "");
-                } else {
-                    serverUrl = serviceBaseUrl.getProtocol() + "://" + serviceBaseUrl.getHost() + ((serviceBaseUrl.getPort() != -1) ? ":" +
-                            serviceBaseUrl.getPort() : "");
-                }
+                String serverUrl = serviceBaseUrl.getProtocol() + "://" + serviceBaseUrl.getHost() + ((serviceBaseUrl.getPort() != -1) ?
+                        ":" + serviceBaseUrl.getPort() : "");
 
                 int startIndex = serviceBaseUrl.getPath().lastIndexOf(applicationPath);
 
@@ -142,7 +130,11 @@ public class SwaggerUiExtension implements Extension {
 
                     Map<String, String> swaggerUiFilterParams = new HashMap<>();
 
-                    swaggerUiFilterParams.put("url", serverUrl + servletPath + "/api-specs/" + applicationPath + "/swagger.json");
+                    if (applicationPath.length() != 0) {
+                        swaggerUiFilterParams.put("url", serverUrl + servletPath + "/api-specs/" + applicationPath + "/swagger.json");
+                    } else {
+                        swaggerUiFilterParams.put("url", serverUrl + servletPath + "/api-specs/swagger.json");
+                    }
                     swaggerUiFilterParams.put("servlet", servletPath);
 
                     server.registerFilter(SwaggerUIFilter.class, "/api-specs/ui/*", swaggerUiFilterParams);

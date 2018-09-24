@@ -149,7 +149,10 @@ public class ApiListingServlet extends HttpServlet {
         }
 
         int index = request.getServletPath().indexOf("api-specs");
-        String applicationBasePath = request.getServletPath().substring(index + 10);
+        String applicationBasePath = "";
+        if (index + 10 < request.getServletPath().length()) {
+            applicationBasePath = request.getServletPath().substring(index + 10);
+        }
 
         try {
             PrintWriter out = response.getWriter();

@@ -99,25 +99,38 @@ public class SwaggerExtension implements Extension {
                     Map<String, String> parameters = new HashMap<>();
 
                     URL baseUrl = null;
+
                     try {
-                        baseUrl = new URL(eeConfig.getServer().getBaseUrl());
+                        Optional<String> swaggerBaseUrl = configurationUtil.get("kumuluzee.swagger.base-url");
+                        if (swaggerBaseUrl.isPresent()) {
+                            baseUrl = new URL(swaggerBaseUrl.get());
+                        } else {
+                            LOG.warning("kumuluzee.swagger.base-url not set. Trying kumuluzee.server.base-url.");
+                            baseUrl = new URL(eeConfig.getServer().getBaseUrl());
+                        }
 
                         beanConfig.setSchemes(new String[]{baseUrl.getProtocol()});
-                        beanConfig.setHost(baseUrl.getHost());
+
+                        if (baseUrl.getPort() == 80 || baseUrl.getPort() == 443 || baseUrl.getPort() == -1) {
+                            beanConfig.setHost(baseUrl.getHost());
+                        } else {
+                            beanConfig.setHost(baseUrl.getHost() + ":" + baseUrl.getPort());
+                        }
+
                         beanConfig.setBasePath(baseUrl.getPath());
-                        
+
                     } catch (MalformedURLException e) {
-                        LOG.warning("kumuluzee.server.base-url not set. Using default values.");
+                        LOG.warning("Provided URL not valid. Check the value of kumuluzee.swagger.base-url or kumuluzee.server.base-url.");
                     }
 
                     if (beanConfig.getSchemes() == null || beanConfig.getSchemes().length == 0) {
                         beanConfig.setSchemes(swaggerConfiguration.getSwagger().getSchemes().stream().map(Scheme::toValue).toArray
                                 (String[]::new));
                     }
-                    if (beanConfig.getHost() != null) {
+                    if (beanConfig.getHost() == null || beanConfig.getHost().length() == 0) {
                         beanConfig.setHost(swaggerConfiguration.getSwagger().getHost());
                     }
-                    if (beanConfig.getBasePath() != null) {
+                    if (beanConfig.getBasePath() == null || beanConfig.getBasePath().length() == 0) {
                         beanConfig.setBasePath(swaggerConfiguration.getSwagger().getBasePath());
                     }
 
