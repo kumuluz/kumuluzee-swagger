@@ -34,12 +34,14 @@ public class SwaggerUIFilter implements Filter {
             Pattern pattern = Pattern.compile("^(.*?)(css|js|url)(.*)$");
             String request_query_string = (httpServletRequest.getQueryString() != null) ? httpServletRequest.getRequestURI() +
                     httpServletRequest.getQueryString() : httpServletRequest.getRequestURI();
-            if ((pattern.matcher(request_query_string).find())) {
+            if ((pattern.matcher(request_query_string).find()) || httpServletRequest.getRequestURI().contains("oauth2-redirect.html")) {
                 filterChain.doFilter(httpServletRequest, httpServletResponse);
             } else {
                 String url = filterConfig.getInitParameter("url");
+                String oauth2RedirectUrl = filterConfig.getInitParameter("oauth2RedirectUrl");
                 String servletPath = filterConfig.getInitParameter("servlet");
-                httpServletResponse.sendRedirect(servletPath + "/api-specs/ui/?url=" + url);
+                httpServletResponse.sendRedirect(servletPath + "/api-specs/ui/?url=" + url + "&" + "oauth2RedirectUrl=" +
+                        oauth2RedirectUrl);
             }
         } else {
             filterChain.doFilter(servletRequest, servletResponse);

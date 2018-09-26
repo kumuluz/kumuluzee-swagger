@@ -15,9 +15,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.servlet.DefaultServlet;
 
 import javax.ws.rs.ApplicationPath;
+import javax.ws.rs.Encoded;
 import javax.ws.rs.core.Application;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -135,6 +138,9 @@ public class SwaggerUiExtension implements Extension {
                     } else {
                         swaggerUiFilterParams.put("url", serverUrl + servletPath + "/api-specs/swagger.json");
                     }
+
+                    swaggerUiFilterParams.put("oauth2RedirectUrl", serverUrl + servletPath + "/api-specs/ui/oauth2-redirect.html");
+
                     swaggerUiFilterParams.put("servlet", servletPath);
 
                     server.registerFilter(SwaggerUIFilter.class, "/api-specs/ui/*", swaggerUiFilterParams);

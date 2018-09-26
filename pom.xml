@@ -34,7 +34,7 @@
         <nexus.staging.plugin.version>1.6.8</nexus.staging.plugin.version>
         <gpg.plugin.version>1.6</gpg.plugin.version>
         <swagger.version>1.5.20</swagger.version>
-        <swagger-ui.version>3.13.6</swagger-ui.version>
+        <swagger-ui.version>3.19.0</swagger-ui.version>
         <apache-commons.version>3.6</apache-commons.version>
 
         <maven.plugin.api.version>3.5.0</maven.plugin.api.version>
