@@ -15,8 +15,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.servlet.DefaultServlet;
 
 import javax.ws.rs.ApplicationPath;
+import javax.ws.rs.Encoded;
 import javax.ws.rs.core.Application;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -70,31 +74,24 @@ public class SwaggerUiExtension implements Extension {
                 ApplicationPath applicationPathAnnotation = applicationClass.getAnnotation(ApplicationPath.class);
                 SwaggerDefinition swaggerAnnotation = applicationClass.getAnnotation(SwaggerDefinition.class);
 
-                String serverUrl = "localhost";
-                Integer port = null;
+                String serverBaseUrl = configurationUtil.get("kumuluzee.swagger.base-url").orElse("");
 
-                if (eeConfig.getServer().getHttp() != null) {
-                    port = eeConfig.getServer().getHttp().getPort();
-                    serverUrl = "http://" + serverUrl;
-                } else {
-                    port = eeConfig.getServer().getHttps().getPort();
-                    serverUrl = "https://" + serverUrl;
+                URL serviceBaseUrl = null;
+
+                if (StringUtils.isEmpty(serverBaseUrl)) {
+                    LOG.warning("Can not find swagger baseUrl in 'kumuluzee.swagger.base-url'. Trying to use 'kumuluzee.server.base-url' " +
+                            "setting!");
+                    serverBaseUrl = eeConfig.getServer().getBaseUrl();
                 }
 
-                serverUrl += (port != null ? ":" + port.toString() : "");
+                if (StringUtils.isEmpty(serverBaseUrl)) {
+                    serverBaseUrl = "http://localhost:8080";
+                }
 
-                if (swaggerAnnotation != null) {
-                    if (!swaggerAnnotation.host().equals("")) {
-                        serverUrl = swaggerAnnotation.host();
-                    }
-
-                    List<SwaggerDefinition.Scheme> schemas = Arrays.asList(swaggerAnnotation.schemes());
-
-                    if (schemas.contains(SwaggerDefinition.Scheme.DEFAULT) || schemas.contains(SwaggerDefinition.Scheme.HTTP)) {
-                        serverUrl = "http://" + serverUrl;
-                    } else if (schemas.contains(SwaggerDefinition.Scheme.HTTPS)) {
-                        serverUrl = "https://" + serverUrl;
-                    }
+                try {
+                    serviceBaseUrl = new URL(serverBaseUrl);
+                } catch (MalformedURLException e) {
+                    LOG.severe("Error creating baseURL for Swagger from '" + serverBaseUrl + "'.");
                 }
 
                 if (applicationPathAnnotation != null) {
@@ -105,7 +102,25 @@ public class SwaggerUiExtension implements Extension {
                     }
                 }
 
+                String serverUrl = serviceBaseUrl.getProtocol() + "://" + serviceBaseUrl.getHost() + ((serviceBaseUrl.getPort() != -1) ?
+                        ":" + serviceBaseUrl.getPort() : "");
+
+                int startIndex = serviceBaseUrl.getPath().lastIndexOf(applicationPath);
+
+                String servletPath = "";
+
+                if (startIndex > 0) {
+                    servletPath = serviceBaseUrl.getPath().substring(0, startIndex);
+                }
+
                 applicationPath = StringUtils.strip(applicationPath, "/");
+
+                servletPath = configurationUtil.get("kumuluzee.swagger.ui.servlet-path").orElse(servletPath);
+                servletPath = StringUtils.strip(servletPath, "/");
+
+                if (!"".equals(servletPath)) {
+                    servletPath = "/" + servletPath;
+                }
 
                 Map<String, String> swaggerUiParams = new HashMap<>();
                 URL webApp = ResourceUtils.class.getClassLoader().getResource("swagger-ui");
@@ -118,7 +133,16 @@ public class SwaggerUiExtension implements Extension {
 
                     Map<String, String> swaggerUiFilterParams = new HashMap<>();
 
-                    swaggerUiFilterParams.put("url", serverUrl + "/api-specs/" + applicationPath + "/swagger.json");
+                    if (applicationPath.length() != 0) {
+                        swaggerUiFilterParams.put("url", serverUrl + servletPath + "/api-specs/" + applicationPath + "/swagger.json");
+                    } else {
+                        swaggerUiFilterParams.put("url", serverUrl + servletPath + "/api-specs/swagger.json");
+                    }
+
+                    swaggerUiFilterParams.put("oauth2RedirectUrl", serverUrl + servletPath + "/api-specs/ui/oauth2-redirect.html");
+
+                    swaggerUiFilterParams.put("servlet", servletPath);
+
                     server.registerFilter(SwaggerUIFilter.class, "/api-specs/ui/*", swaggerUiFilterParams);
                 } else {
                     LOG.warning("Unable to find Swagger-UI artifacts or Swagger UI is disabled.");
