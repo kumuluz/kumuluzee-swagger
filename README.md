@@ -103,6 +103,17 @@ kumuluzee:
     enabled: false
 ```
 
+## Changing hostname and base path
+Hostname and base path can be overridden in swagger.[json,yaml] by setting config parameter **kumuluzee.swagger.base-url**. This will generate API definition with the address that needs to be known to the client consuming the API. It also solves the problems when API is running behind reverse-proxy or API Gateway (that modify the URL of the API).
+
+```yaml
+kumuluzee:
+  swagger:
+    base-url: http://microservice.kumuluz.com/customers-service/
+```
+If **kumuluzee.swagger.base-url** is not set the **kumuluzee.server.base-url** is used as a source setting for the API URL location. If neither is set the "http://localhost:8080" is used. 
+
+
 ## Changelog
 
 Recent changes can be viewed on Github on the [Releases Page](https://github.com/kumuluz/kumuluzee-swagger/releases)
