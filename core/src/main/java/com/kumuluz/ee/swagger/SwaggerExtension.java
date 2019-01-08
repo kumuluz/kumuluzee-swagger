@@ -12,7 +12,6 @@ import com.kumuluz.ee.configuration.utils.ConfigurationUtil;
 import com.kumuluz.ee.jetty.JettyServletServer;
 import com.kumuluz.ee.swagger.models.SwaggerConfiguration;
 import com.kumuluz.ee.swagger.servlets.ApiListingServlet;
-import io.swagger.annotations.SwaggerDefinition;
 import io.swagger.jaxrs.config.BeanConfig;
 import io.swagger.models.Scheme;
 import org.apache.commons.lang3.StringUtils;
