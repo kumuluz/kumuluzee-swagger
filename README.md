@@ -33,14 +33,22 @@ public class CustomerApplication extends Application { ... }
 
 ### Documenting resource class and operations
 ```java
-@Path("customer")
+@Path("customers")
 @Api
 @Produces(MediaType.APPLICATION_JSON)
 public class CustomerResource {
 
     @GET
-    @ApiOperation(value = "Get customers list", tags = {"customers"}, notes = "Returns a list of customers.")
-    @ApiResponses(value = {@ApiResponse(message = "List of customers", code = 200, response = Customer.class)})
+    @ApiOperation(value = "Get customers list", tags = {"customers"}, notes = "Returns a list of customers.",
+            authorizations = {
+                    @Authorization(value = "application")})
+    @ApiResponses(value = {
+            @ApiResponse(
+                    message = "List of customers",
+                    code = 200,
+                    response = Customer.class,
+                    responseContainer = "List")
+    })
     public Response getCustomers() {
 
         List<Customer> customers = new ArrayList<>();
