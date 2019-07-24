@@ -38,11 +38,12 @@ import java.util.concurrent.ConcurrentMap;
 public class ApiListingServlet extends HttpServlet {
 
     private static volatile boolean initialized = false;
-    private static volatile ConcurrentMap<String, Boolean> initializedScanner = new ConcurrentHashMap();
-    private static volatile ConcurrentMap<String, Boolean> initializedConfig = new ConcurrentHashMap();
+    private static ConcurrentMap<String, Boolean> initializedScanner = new ConcurrentHashMap();
+    private static ConcurrentMap<String, Boolean> initializedConfig = new ConcurrentHashMap();
     private static Logger LOGGER = LoggerFactory.getLogger(ApiListingServlet.class);
 
-    private static synchronized Swagger scan(Application app, ServletContext context, ServletConfig sc, String basePath) {
+    private static synchronized Swagger scan(Application app, ServletContext context, ServletConfig sc,
+                                             String basePath) {
         Swagger swagger = null;
         SwaggerContextService ctxService = (new SwaggerContextService()).withServletConfig(sc).withBasePath(basePath);
         Scanner scanner = ctxService.getScanner();
@@ -77,9 +78,11 @@ public class ApiListingServlet extends HttpServlet {
         }
 
         if (SwaggerContextService.isScannerIdInitParamDefined(sc)) {
-            initializedScanner.put(sc.getServletName() + "_" + SwaggerContextService.getScannerIdFromInitParam(sc), Boolean.valueOf(true));
+            initializedScanner.put(sc.getServletName() + "_" + SwaggerContextService.getScannerIdFromInitParam(sc),
+                    Boolean.valueOf(true));
         } else if (SwaggerContextService.isConfigIdInitParamDefined(sc)) {
-            initializedConfig.put(sc.getServletName() + "_" + SwaggerContextService.getConfigIdFromInitParam(sc), Boolean.valueOf(true));
+            initializedConfig.put(sc.getServletName() + "_" + SwaggerContextService.getConfigIdFromInitParam(sc),
+                    Boolean.valueOf(true));
         } else if (SwaggerContextService.isUsePathBasedConfigInitParamDefined(sc)) {
             initializedConfig.put(sc.getServletName() + "_" + ctxService.getBasePath(), Boolean.valueOf(true));
         } else {
@@ -161,12 +164,14 @@ public class ApiListingServlet extends HttpServlet {
             if (type.trim().equalsIgnoreCase("json")) {
                 response.setContentType("application/json");
 
-                specification = this.getListingJsonResponse(null, this.getServletContext(), this.getServletConfig(), null,
+                specification = this.getListingJsonResponse(null, this.getServletContext(), this.getServletConfig(),
+                        null,
                         applicationBasePath);
             } else if (type.trim().equalsIgnoreCase("yaml")) {
                 response.setContentType("application/yaml");
 
-                specification = this.getListingYamlResponse(null, this.getServletContext(), this.getServletConfig(), null,
+                specification = this.getListingYamlResponse(null, this.getServletContext(), this.getServletConfig(),
+                        null,
                         applicationBasePath);
             }
 
@@ -178,7 +183,8 @@ public class ApiListingServlet extends HttpServlet {
         }
     }
 
-    private Swagger process(Application app, ServletContext servletContext, ServletConfig sc, HttpHeaders headers, String basePath) {
+    private Swagger process(Application app, ServletContext servletContext, ServletConfig sc, HttpHeaders headers,
+                            String basePath) {
         SwaggerContextService ctxService = (new SwaggerContextService()).withServletConfig(sc).withBasePath(basePath);
         Swagger swagger = ctxService.getSwagger();
         Class var8 = ApiListingResource.class;
@@ -204,7 +210,8 @@ public class ApiListingServlet extends HttpServlet {
             SwaggerSpecFilter filterImpl = FilterFactory.getFilter();
             if (filterImpl != null) {
                 SpecFilter f = new SpecFilter();
-                swagger = f.filter(swagger, filterImpl, getQueryParams(uriInfo.getQueryParameters()), getCookies(headers), getHeaders
+                swagger = f.filter(swagger, filterImpl, getQueryParams(uriInfo.getQueryParameters()), getCookies
+                (headers), getHeaders
                         (headers));
             }
         }*/
@@ -212,8 +219,9 @@ public class ApiListingServlet extends HttpServlet {
         return swagger;
     }
 
-    private String getListingYamlResponse(Application app, ServletContext servletContext, ServletConfig servletConfig, HttpHeaders
-            headers, String basePath) {
+    private String getListingYamlResponse(Application app, ServletContext servletContext, ServletConfig servletConfig
+            , HttpHeaders
+                                                  headers, String basePath) {
         Swagger swagger = this.process(app, servletContext, servletConfig, headers, basePath);
 
         try {
@@ -233,14 +241,15 @@ public class ApiListingServlet extends HttpServlet {
                 return b.toString();
             }
         } catch (Exception var14) {
-            var14.printStackTrace();
+            LOGGER.error("Unknown exception occurred while generating yaml response: " + var14.getMessage());
         }
 
         return null;
     }
 
-    private String getListingJsonResponse(Application app, ServletContext servletContext, ServletConfig servletConfig, HttpHeaders
-            headers, String basePath) throws JsonProcessingException {
+    private String getListingJsonResponse(Application app, ServletContext servletContext, ServletConfig servletConfig
+            , HttpHeaders
+                                                  headers, String basePath) throws JsonProcessingException {
         Swagger swagger = this.process(app, servletContext, servletConfig, headers, basePath);
         return Json.mapper().enable(SerializationFeature.INDENT_OUTPUT).writeValueAsString(swagger);
     }

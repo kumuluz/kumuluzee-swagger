@@ -54,7 +54,7 @@ public class AnnotationProcessorUtil {
                 writeFileSet(content, resourceName, file, filer);
                 return;
             } catch (IllegalStateException e) {
-                e.printStackTrace();
+                LOG.severe("Unexpected exception occurred while writing file set: " + e.getMessage());
             }
         }
         writeFileSet(content, resourceName, null, filer);
